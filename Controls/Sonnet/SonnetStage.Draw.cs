@@ -403,6 +403,11 @@ public sealed partial class SonnetStage
     private void DrawGlitchScene(CanvasDrawingSession session, Scene scene, long positionMs,
                                  float alpha, float amount, CameraFrame cameraOverride)
     {
+        // Draw the un-shifted frame first: the bands below are shifted sideways and
+        // would otherwise leave their ends empty, which revealed the dark scrim -
+        // a black, torn looking border for the half second the transition lasts.
+        // The Android GL version keeps the previous frame there, so this matches it.
+        DrawScene(session, scene, positionMs, alpha, 0f, 0f, 0f, cameraOverride);
         int bands = _lowPower ? 5 : 8;
         var random = new JavaRandom(_frameCounter / 2 * 31L + _activeShot * 7L);
         for (int band = 0; band < bands; band++)
