@@ -40,4 +40,18 @@
     <Content Include="Assets\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- dotnet publish leaves out the two things the XAML compiler generates -
+       App/MainWindow/Styles/Views 的 *.xbf 以及 BukaMusicDesktop.pri。它们由构建
+       目标在求值之后才加进来，因此没有进入发布清单：装出来的版本一启动就在
+       XAML 初始化崩溃（0xC000027B）。发布完补拷一次。 -->
+  <Target Name="CopyXamlOutputsToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <_XamlPublishItem Include="$(TargetDir)**\*.xbf" />
+      <_XamlPublishItem Include="$(TargetDir)$(AssemblyName).pri" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_XamlPublishItem)"
+          DestinationFiles="@(_XamlPublishItem->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>
