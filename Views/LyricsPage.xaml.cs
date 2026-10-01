@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using Windows.System;
 
 namespace BukaMusicDesktop.Views;
 
@@ -33,6 +34,38 @@ public sealed partial class LyricsPage : Page
         };
         StageHost.PointerMoved += (_, _) => WakeHeader();
         StageHost.PointerPressed += (_, _) => WakeHeader();
+        // Double click on the picture: full screen; Escape (or another double
+        // click) leaves it.
+        // On the picture itself, not on its host: the floating header (track
+        // name + 重新读取) is a sibling of the stage, so double-clicking that
+        // button no longer flips the screen into full view.
+        Stage.DoubleTapped += (_, e) =>
+        {
+            ToggleFullscreen();
+            e.Handled = true;
+        };
+        var escape = new KeyboardAccelerator { Key = VirtualKey.Escape };
+        escape.Invoked += (_, e) =>
+        {
+            if (MainWindow.Instance?.IsFullscreen == true)
+            {
+                MainWindow.Instance.SetFullscreen(false);
+                e.Handled = true;
+            }
+        };
+        KeyboardAccelerators.Add(escape);
+    }
+
+    private void ToggleFullscreen()
+    {
+        var window = MainWindow.Instance;
+        if (window == null) return;
+        bool enter = !window.IsFullscreen;
+        window.SetFullscreen(enter);
+        // Keep the keyboard on this page so Escape reaches its accelerator even
+        // when the pointer never focused anything.
+        if (enter) Focus(FocusState.Programmatic);
+        WakeHeader();
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -47,6 +80,7 @@ public sealed partial class LyricsPage : Page
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
+        if (MainWindow.Instance?.IsFullscreen == true) MainWindow.Instance.SetFullscreen(false);
         _timer.Stop();
         _hideHeaderTimer.Stop();
         _session = null;

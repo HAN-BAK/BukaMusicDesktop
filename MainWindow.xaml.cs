@@ -25,6 +25,15 @@ public sealed partial class MainWindow : Window
     private string _deviceName = "";
     private bool _languageReady;
 
+    /// <summary>The shell that is currently shown, so the lyric page can ask it
+    /// to step aside when the picture goes full screen.</summary>
+    public ShellPage? ActiveShell { get; set; }
+
+    /// <summary>True while the window is in the picture's full-screen mode.</summary>
+    public bool IsFullscreen { get; private set; }
+
+    private (PointInt32 Position, SizeInt32 Size)? _windowedBounds;
+
     public MainWindow()
     {
         Instance = this;
@@ -37,6 +46,19 @@ public sealed partial class MainWindow : Window
 
         SetupTitleBar();
         SetupLanguageBox();
+        // Escape leaves the picture's full-screen mode from anywhere in the
+        // window, not only while the lyric page itself holds focus.
+        var escape = new Microsoft.UI.Xaml.Input.KeyboardAccelerator
+        {
+            Key = Windows.System.VirtualKey.Escape,
+        };
+        escape.Invoked += (_, e) =>
+        {
+            if (!IsFullscreen) return;
+            SetFullscreen(false);
+            e.Handled = true;
+        };
+        WindowRoot.KeyboardAccelerators.Add(escape);
 
         // Every page is built from Chinese literals in XAML; translating it when
         // the page is loaded keeps the XAML readable and the switch instant. The
@@ -273,6 +295,49 @@ public sealed partial class MainWindow : Window
     }
 
     public void SetStatus(string text) => StatusText.Text = text;
+
+    /// <summary>
+    /// Full-screen picture mode: the window goes borderless over the taskbar and
+    /// the console's own chrome (title bar, status bar, side bar) steps aside so
+    /// the lyric PV owns the whole screen. Leaving it restores the window size
+    /// and position that were in use before.
+    /// </summary>
+    public void SetFullscreen(bool on)
+    {
+        if (IsFullscreen == on) return;
+        try
+        {
+            if (on) _windowedBounds = (AppWindow.Position, AppWindow.Size);
+            IsFullscreen = on;
+            SetChromeVisible(!on);
+            ActiveShell?.SetImmersive(on);
+            AppWindow.SetPresenter(on
+                    ? AppWindowPresenterKind.FullScreen
+                    : AppWindowPresenterKind.Overlapped);
+            if (!on && _windowedBounds is { } bounds)
+            {
+                // SetPresenter(Overlapped) hands back a fresh presenter, so put
+                // the window where it was.
+                AppWindow.Move(bounds.Position);
+                AppWindow.Resize(bounds.Size);
+            }
+            LogBus.Info(on ? "歌词画面已全屏（双击或 Esc 退出）" : "已退出全屏");
+        }
+        catch (Exception ex)
+        {
+            IsFullscreen = false;
+            SetChromeVisible(true);
+            ActiveShell?.SetImmersive(false);
+            LogBus.Warn("切换全屏失败：" + ex.Message);
+        }
+    }
+
+    /// <summary>Shows or hides the custom title bar and the bottom status bar.</summary>
+    private void SetChromeVisible(bool visible)
+    {
+        WindowRoot.RowDefinitions[0].Height = visible ? new GridLength(40) : new GridLength(0);
+        WindowRoot.RowDefinitions[2].Height = visible ? new GridLength(30) : new GridLength(0);
+    }
 
     public void SetTitleDevice(string text)
     {

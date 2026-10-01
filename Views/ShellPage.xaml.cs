@@ -29,9 +29,30 @@ public sealed partial class ShellPage : Page
         };
     }
 
+    /// <summary>
+    /// Hides the navigation column and the shell's margins so the content page
+    /// (the lyric picture) can use the whole window. Used by the full-screen
+    /// picture mode.
+    /// </summary>
+    public void SetImmersive(bool on)
+    {
+        try
+        {
+            SidebarBorder.Visibility = on ? Visibility.Collapsed : Visibility.Visible;
+            ShellRoot.ColumnDefinitions[0].Width = on ? new GridLength(0) : new GridLength(210);
+            ShellRoot.Margin = on ? new Thickness(0) : new Thickness(18, 14, 18, 12);
+            ContentFrame.Margin = on ? new Thickness(0) : new Thickness(14, 0, 0, 0);
+        }
+        catch (Exception ex)
+        {
+            LogBus.Warn("切换沉浸模式失败：" + ex.Message);
+        }
+    }
+
     protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        if (MainWindow.Instance != null) MainWindow.Instance.ActiveShell = this;
         if (e.Parameter is not BukaClient client) return;
 
         Session?.Dispose();
@@ -91,6 +112,13 @@ public sealed partial class ShellPage : Page
     protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
+        if (MainWindow.Instance is { } window)
+        {
+            // Never keep the picture's full-screen mode when the shell goes away.
+            if (window.IsFullscreen) window.SetFullscreen(false);
+            if (ReferenceEquals(window.ActiveShell, this)) window.ActiveShell = null;
+        }
+        SetImmersive(false);
         Session?.Dispose();
         Session = null;
         MainWindow.Instance?.SetTitleDevice("");

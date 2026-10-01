@@ -13,7 +13,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- 左侧导航 -->
-        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}"
+        <Border x:Name="SidebarBorder" Grid.Column="0" Background="{StaticResource SidebarBrush}"
                 BorderBrush="{StaticResource StrokeBrush}" BorderThickness="1"
                 CornerRadius="10" Padding="10">
             <Grid>
