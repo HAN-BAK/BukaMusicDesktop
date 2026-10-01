@@ -22,13 +22,20 @@ public sealed partial class SonnetStage : IDisposable
     public const float VH = 720f;
 
     /// <summary>Scrim alpha at the start of a lyric line.</summary>
-    private const float BackdropMaskLineStart = 0.46f;
+    /// <summary>
+    /// Backdrop dimming at the start of a lyric line. Android uses 0.46, which is
+    /// tuned for a TV across the room; on a monitor that step up from 0.10 makes
+    /// the whole picture ~40% darker for a third of a second and reads as the
+    /// screen suddenly going black, so the desktop keeps the breathing but much
+    /// gentler.
+    /// </summary>
+    private const float BackdropMaskLineStart = 0.26f;
     /// <summary>Scrim alpha once the line has been sung out.</summary>
     private const float BackdropMaskLineEnd = 0.10f;
     /// <summary>Scrim alpha while no lyric line is on screen (intro / instrumental).</summary>
-    private const float BackdropMaskIdle = 0.30f;
+    private const float BackdropMaskIdle = 0.18f;
     /// <summary>Time constant of the smoothing that hides line-boundary steps.</summary>
-    private const float BackdropMaskSmoothMs = 320f;
+    private const float BackdropMaskSmoothMs = 620f;
     /// <summary>Crossfade length when the blurred cover changes.</summary>
     private const long BackdropFadeMs = 650L;
 
