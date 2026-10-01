@@ -22,6 +22,9 @@ public sealed partial class ControlPage : Page
     private int _lastSeekMs = -1;
     private bool _suppressVolume;
     private string _coverKey = "";
+    /// <summary>Every five seconds the page checks that what it shows matches the
+    /// device (metadata and cover) and corrects itself when it does not.</summary>
+    private readonly DispatcherTimer _verifyTimer = new() { Interval = TimeSpan.FromSeconds(5) };
 
     public ControlPage()
     {
@@ -33,6 +36,7 @@ public sealed partial class ControlPage : Page
         DragAwareSlider(LocalProgressSlider, () => LocalAudio.Instance.Seeking = true, OnLocalProgressDragEnd);
         LocalAudio.Instance.Updated += OnLocalAudioUpdated;
         Loaded += (_, _) => UpdateLocalAudioUi();
+        _verifyTimer.Tick += (_, _) => VerifyShownState();
     }
 
     // ------------------------------------------------------------------
@@ -119,6 +123,7 @@ public sealed partial class ControlPage : Page
         if (_session == null) return;
         _session.StateUpdated += OnStateUpdated;
         _session.ConnectionChanged += OnConnectionChanged;
+        _verifyTimer.Start();
         OnStateUpdated();
         _ = RefreshCoverAsync();
     }
@@ -126,6 +131,7 @@ public sealed partial class ControlPage : Page
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
+        _verifyTimer.Stop();
         if (_session != null)
         {
             _session.StateUpdated -= OnStateUpdated;
@@ -148,7 +154,16 @@ public sealed partial class ControlPage : Page
     {
         var session = _session;
         if (session == null) return;
-        DispatcherQueue.TryEnqueue(() =>
+        DispatcherQueue.TryEnqueue(() => ApplyState(session));
+    }
+
+    /// <summary>
+    /// Writes the session's current state into the page. Also used by the five
+    /// second check below, which re-applies it when the screen and the device
+    /// disagree (a dropped update used to leave stale text on screen).
+    /// </summary>
+    private void ApplyState(Session session)
+    {
         {
             var state = session.State;
             SourceText.Text = state.SourceText;
@@ -182,17 +197,39 @@ public sealed partial class ControlPage : Page
             // 设备显示歌词页时按钮变成「播放界面」，点一下切回主播放界面。
             DeviceScreenButton.Content = Loc.Current.Text(
                 state.IsLyricsScreen ? "播放界面" : "歌词界面");
-        });
+        }
 
         _ = RefreshCoverAsync();
     }
+
+    /// <summary>Five second self check: metadata text and cover must match the device.</summary>
+    private void VerifyShownState()
+    {
+        var session = _session;
+        if (session == null) return;
+        var state = session.State;
+        bool stale =
+            !string.Equals(TitleText.Text, string.IsNullOrWhiteSpace(state.Title) ? "—" : state.Title, StringComparison.Ordinal)
+            || !string.Equals(ArtistText.Text, state.Artist, StringComparison.Ordinal)
+            || !string.Equals(AlbumText.Text, state.Album, StringComparison.Ordinal)
+            || !string.Equals(SourceText.Text, state.SourceText, StringComparison.Ordinal)
+            || CoverKey(state) != _coverKey;
+        LogBus.Info($"[check] 播放信息自检：一致={!stale}（{state.Title} / 封面 {(CoverKey(state) == _coverKey ? "已同步" : "待更新")}）");
+        if (!stale) return;
+        LogBus.Warn("播放信息与设备不一致，已重新同步");
+        ApplyState(session);
+    }
+
+    /// <summary>Identifies the artwork currently expected from the device.</summary>
+    private static string CoverKey(DeviceState state)
+        => $"{state.Path}|{state.Title}|{state.Artist}|{state.Album}";
 
     private async Task RefreshCoverAsync()
     {
         var session = _session;
         if (session == null) return;
         var state = session.State;
-        var key = $"{state.Title}|{state.Artist}|{state.Album}";
+        var key = CoverKey(state);
         if (key == _coverKey) return;
         _coverKey = key;
         var bytes = await session.Client.GetCoverAsync();
