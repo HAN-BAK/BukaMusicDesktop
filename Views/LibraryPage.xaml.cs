@@ -46,6 +46,8 @@ public sealed partial class LibraryPage : Page
             _uploadHideTimer.Stop();
             UploadProgress.Visibility = Visibility.Collapsed;
             UploadProgress.Value = 0;
+            // The line that goes with the bar leaves with it.
+            UploadStatus.Text = "";
         };
     }
 
@@ -537,6 +539,9 @@ public sealed partial class LibraryPage : Page
                 string dup = Loc.Current.Text("{0}：已在列表中", file.Name);
                 UploadStatus.Text = dup;
                 LogBus.Warn(dup);
+                // Skip messages fade away on the same five-second timer.
+                _uploadHideTimer.Stop();
+                _uploadHideTimer.Start();
                 continue;
             }
             batch.Add(file);
