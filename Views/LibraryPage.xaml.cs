@@ -26,6 +26,8 @@ public sealed partial class LibraryPage : Page
     private readonly ObservableCollection<GroupTile> _tiles = new();
     private Session? _session;
     private string _groupBy = "none";
+    /// <summary>True while the「管理」mode shows tick boxes and counts them.</summary>
+    private bool _managing;
     /// <summary>Key of the album / artist currently open (null = tile grid).</summary>
     private string? _openGroup;
     private string _currentPath = "";
@@ -172,8 +174,19 @@ public sealed partial class LibraryPage : Page
             GroupSubtitleText.Text = Loc.Current.Text("{0} 首", _items.Count);
         }
         // The two views have their own selection; only the visible one counts.
-        GroupGrid.SelectedItems.Clear();
+        ApplyManageState();
         UpdateDeleteButton();
+    }
+
+    /// <summary>Feeds the current manage state into every row / tile.</summary>
+    private void ApplyManageState()
+    {
+        foreach (TrackItem item in _items) item.ShowCheck = _managing;
+        foreach (GroupTile tile in _tiles)
+        {
+            tile.ShowCheck = _managing;
+            foreach (TrackItem item in tile.Tracks) item.ShowCheck = _managing;
+        }
     }
 
     private string GroupKey(TrackItem item)
@@ -243,6 +256,13 @@ public sealed partial class LibraryPage : Page
     private void OnGroupTileClick(object sender, ItemClickEventArgs e)
     {
         if (e.ClickedItem is not GroupTile tile) return;
+        if (_managing)
+        {
+            // In manage mode a click ticks the album / artist instead of opening it.
+            tile.IsChecked = !tile.IsChecked;
+            UpdateDeleteButton();
+            return;
+        }
         _openGroup = tile.Key;
         RefreshView();
     }
@@ -253,10 +273,79 @@ public sealed partial class LibraryPage : Page
         RefreshView();
     }
 
-    private async void OnTrackClick(object sender, ItemClickEventArgs e)
+    private void OnTrackClick(object sender, ItemClickEventArgs e)
     {
         var session = _session;
         if (session == null || e.ClickedItem is not TrackItem track) return;
+        if (_managing)
+        {
+            // In manage mode a click ticks the row instead of playing it.
+            track.IsChecked = !track.IsChecked;
+            UpdateDeleteButton();
+            return;
+        }
+        // A plain click plays on this PC; the device is used from the right-click menu.
+        LocalAudio.Instance.Play(session.Client, TrackList.Visibility == Visibility.Visible
+            ? _items
+            : _items, track);
+        return;
+    }
+
+    /// <summary>Right-click target of the menu, remembered while it is open.</summary>
+    private TrackItem? _menuTrack;
+
+    private void OnTrackRightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement element && element.DataContext is TrackItem track)
+        {
+            _menuTrack = track;
+        }
+        LogBus.Info($"[曲库] 右键：{_menuTrack?.Display ?? "未识别曲目"}");
+    }
+
+    /// <summary>
+    /// Builds the context menu when it opens: a plain click already plays on this
+    /// PC, so the menu offers the device (and the PC as a reminder).
+    /// </summary>
+    private void OnTrackMenuOpening(object sender, object e)
+    {
+        if (sender is not MenuFlyout menu) return;
+        if (menu.Target is FrameworkElement target && target.DataContext is TrackItem fromTarget)
+        {
+            _menuTrack = fromTarget;
+        }
+        var session = _session;
+        menu.Items.Clear();
+        if (_menuTrack == null || session == null)
+        {
+            menu.Items.Add(new MenuFlyoutItem { Text = Loc.Current.Text("暂无"), IsEnabled = false });
+            return;
+        }
+        TrackItem track = _menuTrack;
+
+        var playOnDevice = new MenuFlyoutItem
+        {
+            Text = Loc.Current.Text("在 {0} 上播放", session.Device.Name),
+            Icon = new FontIcon { Glyph = "\uE768" },
+        };
+        playOnDevice.Click += async (_, _) => await PlayOnDeviceAsync(track);
+
+        var playHere = new MenuFlyoutItem
+        {
+            Text = Loc.Current.Text("电脑播放"),
+            Icon = new FontIcon { Glyph = "\uE7F4" },
+        };
+        playHere.Click += (_, _) => LocalAudio.Instance.Play(session.Client, _items, track);
+
+        menu.Items.Add(playOnDevice);
+        menu.Items.Add(playHere);
+        LogBus.Info($"[曲库] 右键菜单：{track.Display}");
+    }
+
+    private async System.Threading.Tasks.Task PlayOnDeviceAsync(TrackItem track)
+    {
+        var session = _session;
+        if (session == null) return;
         var payload = new Dictionary<string, object> { ["path"] = track.Path };
         if (_openGroup != null && _items.Count > 0)
         {
@@ -282,6 +371,27 @@ public sealed partial class LibraryPage : Page
         UpdateDeleteButton();
     }
 
+    /// <summary>Rows / tiles ticked in manage mode (only the visible view counts).</summary>
+    private List<TrackItem> CheckedTracks() => _items.Where(t => t.IsChecked).ToList();
+
+    private List<GroupTile> CheckedTiles() => _tiles.Where(t => t.IsChecked).ToList();
+
+    /// <summary>「管理」/「完成」: shows the tick boxes, or leaves manage mode.</summary>
+    private void OnManage(object sender, RoutedEventArgs e)
+    {
+        _managing = !_managing;
+        if (!_managing)
+        {
+            foreach (TrackItem item in _items) item.IsChecked = false;
+            foreach (GroupTile tile in _tiles) tile.IsChecked = false;
+        }
+        ManageButton.Content = Loc.Current.Text(_managing ? "完成" : "管理");
+        DeleteButton.Visibility = _managing ? Visibility.Visible : Visibility.Collapsed;
+        ApplyManageState();
+        UpdateDeleteButton();
+        LogBus.Info(_managing ? "进入曲库管理模式" : "退出曲库管理模式");
+    }
+
     /// <summary>
     /// The delete button works in both views: individual songs in the list, or
     /// whole albums / artists when the tiles are shown.
@@ -289,8 +399,8 @@ public sealed partial class LibraryPage : Page
     private void UpdateDeleteButton()
     {
         int chosen = TrackList.Visibility == Visibility.Visible
-            ? TrackList.SelectedItems.Count
-            : GroupGrid.SelectedItems.Count;
+            ? CheckedTracks().Count
+            : CheckedTiles().Count;
         DeleteButton.IsEnabled = chosen > 0;
         DeleteButton.Content = chosen > 0
             ? Loc.Current.Text("删除所选（{0}）", chosen)
@@ -302,17 +412,16 @@ public sealed partial class LibraryPage : Page
         var session = _session;
         if (session == null) return;
         bool tiles = TrackList.Visibility != Visibility.Visible;
-        // Songs directly, or every song of the selected albums / artists.
+        // Songs directly, or every song of the ticked albums / artists.
         var selected = tiles
-            ? GroupGrid.SelectedItems.Cast<GroupTile>()
+            ? CheckedTiles()
                 .SelectMany(tile => tile.Tracks).Distinct().ToList()
-            : TrackList.SelectedItems.Cast<TrackItem>().ToList();
+            : CheckedTracks();
         if (selected.Count == 0) return;
         string detail = tiles
-            ? Loc.Current.Text("删除所选（{0}）", GroupGrid.SelectedItems.Count) + "："
-              + string.Join("、", GroupGrid.SelectedItems.Cast<GroupTile>()
-                  .Take(3).Select(t => t.Title))
-              + (GroupGrid.SelectedItems.Count > 3 ? "…" : "")
+            ? Loc.Current.Text("删除所选（{0}）", CheckedTiles().Count) + "："
+              + string.Join("、", CheckedTiles().Take(3).Select(t => t.Title))
+              + (CheckedTiles().Count > 3 ? "…" : "")
               + "\n\n"
             : "";
 
@@ -341,7 +450,26 @@ public sealed partial class LibraryPage : Page
         {
             LogBus.Success($"已删除 {deleted} 个文件");
         }
+        if (deleted > 0)
+        {
+            // The device rescans after a delete; waiting for the removed files to
+            // disappear keeps the list from showing songs that are already gone.
+            var removed = selected.Select(t => t.Path).ToList();
+            for (int attempt = 0; attempt < 14; attempt++)
+            {
+                await System.Threading.Tasks.Task.Delay(900);
+                var tracks = await session.Client.GetLibraryAsync();
+                bool stillThere = tracks.Any(t => removed.Any(path =>
+                    string.Equals(path, t.Path, StringComparison.OrdinalIgnoreCase)));
+                if (!stillThere)
+                {
+                    LogBus.Info("设备已完成曲库刷新");
+                    break;
+                }
+            }
+        }
         await ReloadAsync();
+
     }
 
     private async void OnUpload(object sender, RoutedEventArgs e)

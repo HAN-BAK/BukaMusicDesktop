@@ -7,6 +7,11 @@
     xmlns:controls="using:BukaMusicDesktop.Controls"
     Background="{StaticResource BgBrush}">
 
+    <Page.Resources>
+        <!-- 右键曲目时的菜单；具体条目在打开时按当前设备名生成 -->
+        <MenuFlyout x:Key="TrackMenu" Opening="OnTrackMenuOpening" />
+    </Page.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -38,7 +43,10 @@
                     </ComboBox>
                     <Button Content="上传音乐" Style="{StaticResource AccentButtonStyle}"
                             Click="OnUpload" />
+                    <Button x:Name="ManageButton" Content="管理"
+                            Style="{StaticResource GhostButtonStyle}" Click="OnManage" />
                     <Button x:Name="DeleteButton" Content="删除所选" IsEnabled="False"
+                            Visibility="Collapsed"
                             Style="{StaticResource DangerButtonStyle}" Click="OnDelete" />
                     <Button Content="刷新列表" Style="{StaticResource GhostButtonStyle}"
                             Click="OnRefresh" />
@@ -72,57 +80,142 @@
                                           Style="{StaticResource MarqueeLabelStyle}" />
                 </StackPanel>
 
-                <Grid x:Name="ListHeaderRow" Grid.Row="1" Padding="12,8,12,8">
+                <!-- 与行模板使用完全相同的列宽与内边距，保证各列上下对齐 -->
+                <Grid x:Name="ListHeaderRow" Grid.Row="1" Padding="12,10,12,10"
+                      ColumnSpacing="14">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="180" />
                         <ColumnDefinition Width="160" />
-                        <ColumnDefinition Width="70" />
-                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="76" />
+                        <ColumnDefinition Width="96" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="标题 / 文件名" Style="{StaticResource LabelTextStyle}" />
-                    <TextBlock Grid.Column="1" Text="歌手" Style="{StaticResource LabelTextStyle}" />
-                    <TextBlock Grid.Column="2" Text="专辑" Style="{StaticResource LabelTextStyle}" />
-                    <TextBlock Grid.Column="3" Text="时长" Style="{StaticResource LabelTextStyle}" />
-                    <TextBlock Grid.Column="4" Text="大小" Style="{StaticResource LabelTextStyle}" />
+                    <TextBlock x:Name="HeaderTitle" Grid.Column="0" Text="标题 / 文件名" VerticalAlignment="Center"
+                               Style="{StaticResource LabelTextStyle}" />
+                    <TextBlock x:Name="HeaderArtist" Grid.Column="1" Text="歌手" VerticalAlignment="Center"
+                               Style="{StaticResource LabelTextStyle}" />
+                    <TextBlock x:Name="HeaderAlbum" Grid.Column="2" Text="专辑" VerticalAlignment="Center"
+                               Style="{StaticResource LabelTextStyle}" />
+                    <TextBlock x:Name="HeaderDuration" Grid.Column="3" Text="时长" VerticalAlignment="Center"
+                               TextAlignment="Right"
+                               Style="{StaticResource LabelTextStyle}" />
+                    <TextBlock x:Name="HeaderSize" Grid.Column="4" Text="大小" VerticalAlignment="Center"
+                               TextAlignment="Right"
+                               Style="{StaticResource LabelTextStyle}" />
                 </Grid>
 
-                <ListView x:Name="TrackList" Grid.Row="2" SelectionMode="Extended"
+                <ListView x:Name="TrackList" Grid.Row="2" SelectionMode="None"
                           IsItemClickEnabled="True" ItemClick="OnTrackClick"
                           SelectionChanged="OnSelectionChanged">
+                    <!-- 容器自带 16/12 的内边距，会让数据行比表头窄 28 像素、
+                         各列整体左移；清零后与表头逐列对齐。 -->
+                    <ListView.Resources>
+                        <!-- 悬停 / 选中底色由 ListViewItemPresenter 绘制，它的圆角
+                             取的是这个主题资源，只在列表范围内覆盖，避免影响其它控件。 -->
+                        <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
+                    </ListView.Resources>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0,1,0,1" />
+                            <Setter Property="MinHeight" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <!-- 默认模板的底色由 ListViewItemPresenter 绘制，它的圆角固定取
+                                 主题资源、不受样式影响，所以这里用自定义模板自己画底色。 -->
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListViewItem">
+                                        <Grid x:Name="RowRoot" CornerRadius="8"
+                                              Background="Transparent"
+                                              ContextFlyout="{StaticResource TrackMenu}">
+                                            <VisualStateManager.VisualStateGroups>
+                                                <VisualStateGroup x:Name="CommonStates">
+                                                    <VisualState x:Name="Normal" />
+                                                    <VisualState x:Name="PointerOver">
+                                                        <VisualState.Setters>
+                                                            <Setter Target="RowRoot.Background"
+                                                                    Value="{StaticResource CardHoverBrush}" />
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                    <VisualState x:Name="Pressed">
+                                                        <VisualState.Setters>
+                                                            <Setter Target="RowRoot.Background"
+                                                                    Value="{StaticResource CardBrush}" />
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                    <VisualState x:Name="Selected" />
+                                                    <VisualState x:Name="PointerOverSelected" />
+                                                    <VisualState x:Name="PressedSelected" />
+                                                    <VisualState x:Name="Disabled" />
+                                                </VisualStateGroup>
+                                            </VisualStateManager.VisualStateGroups>
+                                            <ContentPresenter Content="{TemplateBinding Content}"
+                                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                              Padding="{TemplateBinding Padding}"
+                                                              HorizontalAlignment="Stretch"
+                                                              VerticalAlignment="Center" />
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="core:TrackItem">
-                            <Grid Padding="4,7,4,7">
+                            <!-- 与表头保持同样的列宽、内边距与列间距 -->
+                            <Grid Padding="13,7,12,7" ColumnSpacing="14"
+                                  Background="Transparent"
+                                  RightTapped="OnTrackRightTapped"
+                                  ContextFlyout="{StaticResource TrackMenu}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="180" />
                                     <ColumnDefinition Width="160" />
-                                    <ColumnDefinition Width="70" />
-                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="96" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <FontIcon Glyph="&#xE768;" FontSize="11"
-                                                  Visibility="{x:Bind CurrentVisibility, Mode=OneWay}"
-                                                  Foreground="{StaticResource AccentBrush}"
-                                                  VerticalAlignment="Center" />
-                                        <controls:MarqueeText Text="{x:Bind Display}"
-                                                              FontFamily="{StaticResource UiFont}"
-                                                              FontSize="13"
-                                                              Foreground="{x:Bind TitleBrush, Mode=OneWay}"
-                                                              VerticalAlignment="Center" />
+                                <!-- 勾选框单独占一列：出现时标题与下方路径一起右移，
+                                     两行始终左对齐；不显示时该列宽度为 0。 -->
+                                <Grid Grid.Column="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{x:Bind IsChecked, Mode=OneWay}"
+                                              Visibility="{x:Bind CheckVisibility, Mode=OneWay}"
+                                              MinWidth="0" Margin="0,0,2,0"
+                                              VerticalAlignment="Center"
+                                              IsHitTestVisible="False" />
+                                    <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon Glyph="&#xE768;" FontSize="11"
+                                                      Visibility="{x:Bind CurrentVisibility, Mode=OneWay}"
+                                                      Foreground="{StaticResource AccentBrush}"
+                                                      VerticalAlignment="Center" />
+                                            <controls:MarqueeText Text="{x:Bind Display}"
+                                                                  FontFamily="{StaticResource UiFont}"
+                                                                  FontSize="13"
+                                                                  Foreground="{x:Bind TitleBrush, Mode=OneWay}"
+                                                                  VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <controls:MarqueeText Text="{x:Bind RelativePath}"
+                                                              Margin="0,2,0,0"
+                                                              FontFamily="Consolas" FontSize="11"
+                                                              Foreground="{StaticResource TextSecondaryBrush}" />
                                     </StackPanel>
-                                    <controls:MarqueeText Text="{x:Bind RelativePath}"
-                                                          FontFamily="Consolas" FontSize="11"
-                                                          Foreground="{StaticResource TextSecondaryBrush}" />
-                                </StackPanel>
+                                </Grid>
                                 <controls:MarqueeText Grid.Column="1" Text="{x:Bind Artist}"
-                                                      Style="{StaticResource MarqueeValueStyle}" />
+                                                      Style="{StaticResource MarqueeValueStyle}"
+                                                      VerticalAlignment="Center" />
                                 <controls:MarqueeText Grid.Column="2" Text="{x:Bind Album}"
-                                                      Style="{StaticResource MarqueeValueStyle}" />
+                                                      Style="{StaticResource MarqueeValueStyle}"
+                                                      VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="3" Text="{x:Bind DurationText}"
+                                           VerticalAlignment="Center" TextAlignment="Right"
                                            Style="{StaticResource LabelTextStyle}" />
                                 <TextBlock Grid.Column="4" Text="{x:Bind SizeText}"
+                                           VerticalAlignment="Center" TextAlignment="Right"
                                            Style="{StaticResource LabelTextStyle}" />
                             </Grid>
                         </DataTemplate>
@@ -132,7 +225,7 @@
                 <!-- 专辑 / 歌手浏览：先看图片和名字，点进去才是歌曲 -->
                 <GridView x:Name="GroupGrid" Grid.Row="1" Grid.RowSpan="2"
                           Padding="6" Visibility="Collapsed"
-                          SelectionMode="Multiple" IsItemClickEnabled="True"
+                          SelectionMode="None" IsItemClickEnabled="True"
                           SelectionChanged="OnGroupSelectionChanged"
                           ItemClick="OnGroupTileClick">
                     <GridView.ItemTemplate>
@@ -140,8 +233,17 @@
                             <StackPanel Width="166" Spacing="8" Padding="4,4,4,10">
                                 <Border Width="158" Height="158" CornerRadius="10"
                                         Background="{StaticResource CardHoverBrush}">
-                                    <Image Source="{x:Bind Cover, Mode=OneWay}"
-                                           Stretch="UniformToFill" />
+                                    <Grid>
+                                        <Image Source="{x:Bind Cover, Mode=OneWay}"
+                                               Stretch="UniformToFill" />
+                                        <!-- 勾选框只在「管理」模式下出现 -->
+                                        <CheckBox IsChecked="{x:Bind IsChecked, Mode=OneWay}"
+                                                  Visibility="{x:Bind CheckVisibility, Mode=OneWay}"
+                                                  MinWidth="0" Margin="8,8,0,0"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Top"
+                                                  IsHitTestVisible="False" />
+                                    </Grid>
                                 </Border>
                                 <controls:MarqueeText Text="{x:Bind Title}"
                                                       FontFamily="{StaticResource UiFont}"

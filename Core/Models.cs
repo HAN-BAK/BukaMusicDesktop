@@ -32,8 +32,8 @@ public sealed class DeviceState : INotifyPropertyChanged
     // The device sends Chinese placeholders when a tag is missing; they are
     // translated on the way out so the console never mixes languages.
     public string Title { get => Loc.Current.Text(_title); set => Set(ref _title, value); }
-    public string Artist { get => Loc.Current.Text(_artist); set => Set(ref _artist, value); }
-    public string Album { get => Loc.Current.Text(_album); set => Set(ref _album, value); }
+    public string Artist { get => Loc.Current.Tag(_artist, "未知歌手"); set => Set(ref _artist, value); }
+    public string Album { get => Loc.Current.Tag(_album, "未知专辑"); set => Set(ref _album, value); }
     /// <summary>File path of the current local track (empty outside local mode).</summary>
     public string Path { get => _path; set => Set(ref _path, value); }
     public int PositionMs { get => _positionMs; set => Set(ref _positionMs, value, nameof(PositionMs), nameof(PositionText)); }
@@ -58,7 +58,8 @@ public sealed class DeviceState : INotifyPropertyChanged
 
     private static string Format(int ms)
     {
-        if (ms <= 0) return "0:00";
+        // No duration reported by the device: show the "none" placeholder.
+        if (ms <= 0) return Loc.Current.Text("暂无");
         var span = TimeSpan.FromMilliseconds(ms);
         return span.TotalHours >= 1
             ? $"{(int)span.TotalHours}:{span.Minutes:D2}:{span.Seconds:D2}"
@@ -165,17 +166,20 @@ public sealed class TrackItem : INotifyPropertyChanged
     private readonly string _artist = "";
     private readonly string _album = "";
     public string Title { get => Loc.Current.Text(_title); init => _title = value; }
-    public string Artist { get => Loc.Current.Text(_artist); init => _artist = value; }
-    public string Album { get => Loc.Current.Text(_album); init => _album = value; }
+    public string Artist { get => Loc.Current.Tag(_artist, "未知歌手"); init => _artist = value; }
+    public string Album { get => Loc.Current.Tag(_album, "未知专辑"); init => _album = value; }
     public long DurationMs { get; init; }
     public long SizeBytes { get; init; }
 
-    public string DurationText => TimeSpan.FromMilliseconds(DurationMs) is var span
-        ? $"{(int)span.TotalMinutes}:{span.Seconds:D2}"
-        : "";
+    public string DurationText => DurationMs <= 0
+        ? Loc.Current.Text("暂无")
+        : TimeSpan.FromMilliseconds(DurationMs) is var span
+            ? $"{(int)span.TotalMinutes}:{span.Seconds:D2}"
+            : Loc.Current.Text("暂无");
 
     public string SizeText => SizeBytes switch
     {
+        <= 0 => Loc.Current.Text("暂无"),
         >= 1024L * 1024L * 1024L => $"{SizeBytes / 1024d / 1024d / 1024d:0.00} GB",
         >= 1024L * 1024L => $"{SizeBytes / 1024d / 1024d:0.0} MB",
         >= 1024L => $"{SizeBytes / 1024d:0} KB",
@@ -183,6 +187,35 @@ public sealed class TrackItem : INotifyPropertyChanged
     };
 
     public string Display => string.IsNullOrWhiteSpace(Title) ? Name : Title;
+
+    private bool _checked;
+    private bool _showCheck;
+
+    /// <summary>Ticked in the library's manage mode.</summary>
+    public bool IsChecked
+    {
+        get => _checked;
+        set
+        {
+            if (_checked == value) return;
+            _checked = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsChecked)));
+        }
+    }
+
+    /// <summary>Whether the tick box is shown at all (manage mode).</summary>
+    public bool ShowCheck
+    {
+        get => _showCheck;
+        set
+        {
+            if (_showCheck == value) return;
+            _showCheck = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CheckVisibility)));
+        }
+    }
+
+    public Visibility CheckVisibility => ShowCheck ? Visibility.Visible : Visibility.Collapsed;
 
     /// <summary>True for the song the device is playing right now.</summary>
     public bool IsCurrent
@@ -388,6 +421,34 @@ public sealed class LyricSet
 public sealed class GroupTile : INotifyPropertyChanged
 {
     private Microsoft.UI.Xaml.Media.ImageSource? _cover;
+    private bool _checked;
+    private bool _showCheck;
+
+    /// <summary>Ticked in the library's manage mode (whole album / artist).</summary>
+    public bool IsChecked
+    {
+        get => _checked;
+        set
+        {
+            if (_checked == value) return;
+            _checked = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsChecked)));
+        }
+    }
+
+    /// <summary>Whether the tick box is shown at all (manage mode).</summary>
+    public bool ShowCheck
+    {
+        get => _showCheck;
+        set
+        {
+            if (_showCheck == value) return;
+            _showCheck = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CheckVisibility)));
+        }
+    }
+
+    public Visibility CheckVisibility => ShowCheck ? Visibility.Visible : Visibility.Collapsed;
 
     /// <summary>Album or artist name (also the group key).</summary>
     public string Key { get; init; } = "";

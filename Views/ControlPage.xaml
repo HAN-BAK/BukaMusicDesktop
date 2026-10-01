@@ -115,6 +115,54 @@
             </Border>
 
             <!-- 播放方式与维护已移到「设置」页，这里只保留进度、播放/暂停与系统音量。 -->
+
+            <!-- 电脑端本地播放：在电脑上播放设备里的歌曲（音频来自设备，
+                 与上面的设备控制互不影响） -->
+            <Border Style="{StaticResource SectionCardStyle}">
+                <StackPanel Spacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="电脑播放" Style="{StaticResource SectionTitleStyle}"
+                                   Margin="0" />
+                        <TextBlock x:Name="LocalHintText" Text="左键点击曲库里的歌曲即在此播放"
+                                   VerticalAlignment="Center"
+                                   Style="{StaticResource HintTextStyle}" />
+                    </StackPanel>
+
+                    <controls:MarqueeText x:Name="LocalTrackText" Text="未在播放"
+                                          Style="{StaticResource MarqueeValueStyle}" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="LocalPositionText" Grid.Column="0" Text="0:00"
+                                   Style="{StaticResource LabelTextStyle}" />
+                        <Slider x:Name="LocalProgressSlider" Grid.Column="1"
+                                Minimum="0" Maximum="1000" Margin="12,0,12,0"
+                                VerticalAlignment="Center"
+                                ValueChanged="OnLocalProgressChanged" />
+                        <TextBlock x:Name="LocalDurationText" Grid.Column="2" Text="0:00"
+                                   Style="{StaticResource LabelTextStyle}" />
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16">
+                        <Button x:Name="LocalPrevButton" Click="OnLocalPrevious"
+                                Style="{StaticResource GhostButtonStyle}" Padding="16,10">
+                            <FontIcon Glyph="&#xE892;" FontSize="18" />
+                        </Button>
+                        <Button x:Name="LocalPlayButton" Click="OnLocalToggle"
+                                Style="{StaticResource AccentButtonStyle}" Padding="24,12">
+                            <FontIcon x:Name="LocalPlayIcon" Glyph="&#xE768;" FontSize="22" />
+                        </Button>
+                        <Button x:Name="LocalNextButton" Click="OnLocalNext"
+                                Style="{StaticResource GhostButtonStyle}" Padding="16,10">
+                            <FontIcon Glyph="&#xE893;" FontSize="18" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </Page>

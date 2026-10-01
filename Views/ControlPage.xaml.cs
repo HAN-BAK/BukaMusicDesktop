@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using BukaMusicDesktop.Core;
 using Microsoft.UI.Xaml;
@@ -29,6 +30,62 @@ public sealed partial class ControlPage : Page
         // 所以这里用 AddHandler(handledEventsToo) 捕获拖动结束（含捕获丢失）。
         DragAwareSlider(ProgressSlider, OnProgressDragStart, OnProgressDragEnd);
         DragAwareSlider(VolumeSlider, () => _draggingVolume = true, OnVolumeDragEnd);
+        DragAwareSlider(LocalProgressSlider, () => LocalAudio.Instance.Seeking = true, OnLocalProgressDragEnd);
+        LocalAudio.Instance.Updated += OnLocalAudioUpdated;
+        Loaded += (_, _) => UpdateLocalAudioUi();
+    }
+
+    // ------------------------------------------------------------------
+    // 电脑端本地播放
+    // ------------------------------------------------------------------
+
+    private void OnLocalAudioUpdated() => DispatcherQueue.TryEnqueue(UpdateLocalAudioUi);
+
+    /// <summary>Mirrors the local player's state into the transport card.</summary>
+    private void UpdateLocalAudioUi()
+    {
+        var audio = LocalAudio.Instance;
+        LocalTrackText.Text = audio.TrackText;
+        LocalPlayIcon.Glyph = audio.IsPlaying ? "\uE769" : "\uE768";
+        LocalPrevButton.IsEnabled = audio.HasTrack;
+        LocalPlayButton.IsEnabled = audio.HasTrack;
+        LocalNextButton.IsEnabled = audio.HasTrack;
+        if (audio.Seeking) return;
+        double total = audio.Duration.TotalMilliseconds;
+        double position = audio.Position.TotalMilliseconds;
+        LocalProgressSlider.Maximum = total > 0 ? total : 1000;
+        LocalProgressSlider.Value = total > 0 ? Math.Min(position, total) : 0;
+        LocalPositionText.Text = ShortTime(position);
+        LocalDurationText.Text = ShortTime(total);
+    }
+
+    private static string ShortTime(double ms)
+    {
+        if (ms <= 0) return "0:00";
+        var span = TimeSpan.FromMilliseconds(ms);
+        return span.TotalHours >= 1
+            ? $"{(int)span.TotalHours}:{span.Minutes:D2}:{span.Seconds:D2}"
+            : $"{span.Minutes}:{span.Seconds:D2}";
+    }
+
+    private void OnLocalToggle(object sender, RoutedEventArgs e) => LocalAudio.Instance.Toggle();
+
+    private void OnLocalPrevious(object sender, RoutedEventArgs e) => LocalAudio.Instance.Previous();
+
+    private void OnLocalNext(object sender, RoutedEventArgs e) => LocalAudio.Instance.Next();
+
+    private void OnLocalProgressChanged(object sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (!LocalAudio.Instance.Seeking) return;
+        LocalPositionText.Text = ShortTime(e.NewValue);
+    }
+
+    private void OnLocalProgressDragEnd()
+    {
+        var audio = LocalAudio.Instance;
+        double target = LocalProgressSlider.Value;
+        audio.Seeking = false;
+        audio.Seek(TimeSpan.FromMilliseconds(target));
     }
 
     private static void DragAwareSlider(Slider slider, Action? onStart, Action onEnd)

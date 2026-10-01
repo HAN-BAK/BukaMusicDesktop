@@ -46,6 +46,15 @@ public sealed class Loc
     public void SetLanguage(UiLanguage language) => Language = language;
 
     /// <summary>
+    /// Text for a tag the device could not read. Missing tags arrive as an empty
+    /// string or as the Chinese placeholder ("未知歌手"), both show as「暂无」.
+    /// </summary>
+    public string Tag(string value, string chinesePlaceholder)
+        => string.IsNullOrWhiteSpace(value) || value == chinesePlaceholder
+            ? Text("暂无")
+            : Text(value);
+
+    /// <summary>
     /// Translates the status line a device sends, which is already formatted in
     /// the device's own language (for example "多房间播放中（2 台）").
     /// </summary>
@@ -111,6 +120,8 @@ public sealed class Loc
         Add("连接中断", "Connection lost", "接続が切断されました", "연결이 끊겼습니다");
         Add("{0} 首", "{0} songs", "{0} 曲", "{0}곡");
         Add("未知", "Unknown", "不明", "알 수 없음");
+        // 列表里缺信息时的占位（歌手 / 专辑 / 时长 / 大小）
+        Add("暂无", "N/A", "なし", "없음");
         // Placeholders the device sends when a tag is missing.
         Add("未知歌曲", "Unknown title", "不明な曲", "알 수 없는 곡");
         Add("未知歌手", "Unknown artist", "不明なアーティスト", "알 수 없는 아티스트");
@@ -195,6 +206,13 @@ public sealed class Loc
             "AirPlay の再生位置は送信側（スマートフォン）が制御するため、ここにプログレスバーは表示されません。",
             "AirPlay 재생 위치는 송신 기기(휴대폰)가 제어하므로 여기에 진행 막대를 표시하지 않습니다.");
         Add("重新扫描音乐", "Rescan music", "音楽を再スキャン", "음악 다시 검색");
+        // 电脑端本地播放
+        Add("电脑播放", "This PC", "パソコンで再生", "PC에서 재생");
+        Add("左键点击曲库里的歌曲即在此播放",
+            "Left-click a song in the library to play it here",
+            "ライブラリの曲を左クリックするとここで再生します",
+            "라이브러리에서 곡을 왼쪽 클릭하면 여기에서 재생됩니다");
+        Add("在 {0} 上播放", "Play on {0}", "{0} で再生", "{0}에서 재생");
 
         // -------------------------------------------------------------- 曲库页
         Add("搜索标题 / 歌手 / 专辑 / 文件名",
@@ -207,6 +225,8 @@ public sealed class Loc
         Add("上传音乐", "Upload music", "音楽をアップロード", "음악 업로드");
         Add("删除所选", "Delete selected", "選択項目を削除", "선택 항목 삭제");
         Add("删除所选（{0}）", "Delete selected ({0})", "選択項目を削除（{0}）", "선택 항목 삭제 ({0})");
+        Add("管理", "Manage", "管理", "관리");
+        Add("完成", "Done", "完了", "완료");
         Add("刷新列表", "Refresh list", "リストを更新", "목록 새로 고침");
         Add("← 返回", "← Back", "← 戻る", "← 뒤로");
         Add("标题 / 文件名", "Title / file name", "タイトル / ファイル名", "제목 / 파일 이름");
