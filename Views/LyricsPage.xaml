@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:BukaMusicDesktop.Controls"
     IsTabStop="True"
+    KeyboardAcceleratorPlacementMode="Hidden"
     Background="{StaticResource BgBrush}">
 
     <!-- The lyric view fills the whole content area, exactly like the Android

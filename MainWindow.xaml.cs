@@ -58,6 +58,10 @@ public sealed partial class MainWindow : Window
             SetFullscreen(false);
             e.Handled = true;
         };
+        // The accelerator must not paint an "Esc" badge into a hover tooltip:
+        // the default Auto placement shows one on whatever the pointer is over.
+        WindowRoot.KeyboardAcceleratorPlacementMode =
+                Microsoft.UI.Xaml.Input.KeyboardAcceleratorPlacementMode.Hidden;
         WindowRoot.KeyboardAccelerators.Add(escape);
 
         // Every page is built from Chinese literals in XAML; translating it when
