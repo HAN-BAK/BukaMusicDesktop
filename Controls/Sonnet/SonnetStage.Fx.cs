@@ -523,7 +523,7 @@ public sealed partial class SonnetStage
             DrawGrain(session);
         }
         // The vignette is drawn with the radial gradient brush.
-        if (_vignette != null)
+        if (_vignette != null && !SkipDarkLayers)
         {
             session.FillRectangle(0f, 0f, _viewW, _viewH, _vignette);
         }

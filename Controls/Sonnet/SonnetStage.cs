@@ -43,6 +43,18 @@ public sealed partial class SonnetStage : IDisposable
     /// band along the edges.
     /// </summary>
     private const float BackdropOverscan = 0.03f;
+
+    /// <summary>
+    /// Diagnosis switch (BUKA_LYRICS_NODARK=1): skips the three full-frame
+    /// darkening layers (per-line mask, scrim, vignette) so a stray dark border
+    /// can be traced to the layer that draws it.
+    /// </summary>
+    public static bool SkipDarkLayers { get; set; } =
+        Environment.GetEnvironmentVariable("BUKA_LYRICS_NODARK") == "1";
+
+    /// <summary>Diagnosis switch (BUKA_LYRICS_NOBACKDROP=1): skips the blurred cover.</summary>
+    public static bool SkipBackdrop { get; set; } =
+        Environment.GetEnvironmentVariable("BUKA_LYRICS_NOBACKDROP") == "1";
     /// <summary>Crossfade length when the blurred cover changes.</summary>
     private const long BackdropFadeMs = 650L;
 

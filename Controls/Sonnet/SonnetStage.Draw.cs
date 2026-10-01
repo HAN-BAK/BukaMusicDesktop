@@ -198,7 +198,7 @@ public sealed partial class SonnetStage
     public void DrawSceneFrame(CanvasDrawingSession session, long positionMs, long now)
     {
         session.FillRectangle(0f, 0f, _viewW, _viewH, StageBaseColor);
-        if (_backdrop != null)
+        if (_backdrop != null && !SkipBackdrop)
         {
             // Overscan: the backdrop covers a few percent beyond the frame so a
             // shifted layer can never expose the flat base colour as a border.
@@ -228,11 +228,17 @@ public sealed partial class SonnetStage
                     new Rect(0, 0, _backdrop.SizeInPixels.Width, _backdrop.SizeInPixels.Height),
                     fade, CanvasImageInterpolation.Linear);
             float mask = BackgroundMaskAlpha(positionMs, now);
-            session.FillRectangle(0f, 0f, _viewW, _viewH,
-                    Color.FromArgb((byte)Math.Round(mask * 255f), 0, 0, 0));
+            if (!SkipDarkLayers)
+            {
+                session.FillRectangle(0f, 0f, _viewW, _viewH,
+                        Color.FromArgb((byte)Math.Round(mask * 255f), 0, 0, 0));
+            }
         }
         EnsureBrushes(session.Device);
-        session.FillRectangle(0f, 0f, _viewW, _viewH, _scrim!);
+        if (!SkipDarkLayers)
+        {
+            session.FillRectangle(0f, 0f, _viewW, _viewH, _scrim!);
+        }
         DrawStage(session, positionMs, now);
         DrawTranslationSubtitle(session, positionMs);
         DrawPostEffects(session);

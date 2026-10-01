@@ -3,6 +3,7 @@ using System.IO;
 using System.Numerics;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Effects;
+using Microsoft.UI;
 using Windows.Foundation;
 
 namespace BukaMusicDesktop.Controls;
@@ -26,6 +27,7 @@ public sealed class SonnetPostFx : IDisposable
     private PixelShaderEffect? _final;
     private GaussianBlurEffect? _blur;
     private ColorMatrixEffect? _fallback;
+    private CanvasRenderTarget? _blurred;
 
     public SonnetPostFx()
     {
@@ -76,7 +78,25 @@ public sealed class SonnetPostFx : IDisposable
         {
             _blur.BlurAmount = Math.Min(8f, blurStrength * 0.55f);
             _blur.Source = scene;
-            source = _blur;
+            // The blurred frame is flattened into a plain bitmap first. Handing
+            // the blur effect straight to the pixel shader makes Direct2D give
+            // it a padded intermediate surface, and D2DGetInputCoordinate(0)
+            // then maps uv onto that padded rect: for as long as a FastBlur
+            // transition runs, the left and top strips sample outside the
+            // picture and come out as a hard dark border (measured 143 -> 20 at
+            // 1351x972). A bitmap input keeps the mapping 1:1.
+            CanvasRenderTarget? flat = EnsureBlurredTarget(scene);
+            if (flat != null)
+            {
+                using (CanvasDrawingSession session2 = flat.CreateDrawingSession())
+                {
+                    session2.Clear(Colors.Black);
+                    session2.DrawImage(_blur,
+                            new Rect(0, 0, flat.SizeInPixels.Width, flat.SizeInPixels.Height),
+                            sourceRect, 1f, CanvasImageInterpolation.Linear);
+                }
+                source = flat;
+            }
         }
 
         if (_final != null)
@@ -104,5 +124,31 @@ public sealed class SonnetPostFx : IDisposable
     {
         _final?.Dispose();
         _blur?.Dispose();
+        _blurred?.Dispose();
+    }
+
+    /// <summary>Reusable bitmap that the blur is flattened into.</summary>
+    private CanvasRenderTarget? EnsureBlurredTarget(CanvasRenderTarget scene)
+    {
+        int width = (int)Math.Round((double)scene.SizeInPixels.Width);
+        int height = (int)Math.Round((double)scene.SizeInPixels.Height);
+        if (width < 2 || height < 2) return null;
+        if (_blurred != null
+            && (int)Math.Round((double)_blurred.SizeInPixels.Width) == width
+            && (int)Math.Round((double)_blurred.SizeInPixels.Height) == height)
+        {
+            return _blurred;
+        }
+        _blurred?.Dispose();
+        try
+        {
+            _blurred = new CanvasRenderTarget(scene.Device, width, height, 96f);
+        }
+        catch (Exception)
+        {
+            _blurred = null;
+            return null;
+        }
+        return _blurred;
     }
 }

@@ -11,6 +11,9 @@ dist/
 *.log
 *.tmp
 
+# 渲染探针输出的帧（--lyrics-seq / --lyrics-probe）
+probe/
+
 # 系统
 .DS_Store
 Thumbs.db
