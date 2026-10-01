@@ -44,6 +44,12 @@ public partial class App : Application
                 _ = RunSequenceAsync(outDir, host, start, end, step, w, h);
                 return;
             }
+            if (argv[i] == "--upload-test")
+            {
+                // --upload-test <host> <file>  (temporary upload smoke test)
+                _ = RunUploadTestAsync(argv[i + 1], argv[i + 2]);
+                return;
+            }
         }
         // Debug shortcut: open the console on one device's lyric page directly.
         for (int i = 0; i < argv.Length - 1; i++)
@@ -125,6 +131,29 @@ public partial class App : Application
         catch (Exception ex)
         {
             try { File.WriteAllText(Path.Combine(outDir, "error.txt"), ex.ToString()); } catch { }
+        }
+        Current.Exit();
+    }
+
+    private static async System.Threading.Tasks.Task RunUploadTestAsync(string host, string file)
+    {
+        // Debug switch: runs the console's own upload path without the UI, so a
+        // client-side regression (bad Content-Length, chunked body, ...) can be
+        // reproduced and checked in one command.
+        string log = Path.Combine(Path.GetTempPath(), "buka_upload_test.txt");
+        try
+        {
+            var client = new BukaClient(new DeviceInfo { Ip = host, Port = 8080 });
+            var progress = new Progress<double>(_ => { });
+            UploadOutcome outcome = await client.UploadAsync(file, progress);
+            string line = $"{outcome.Ok}|{outcome.Message}";
+            File.WriteAllText(log, line);
+            LogBus.Info($"上传自检：{line}");
+        }
+        catch (Exception ex)
+        {
+            LogBus.Error("上传自检失败：" + ex.Message);
+            try { File.WriteAllText(log, "EX|" + ex.Message); } catch { }
         }
         Current.Exit();
     }

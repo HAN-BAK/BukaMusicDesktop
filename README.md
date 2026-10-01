@@ -99,6 +99,7 @@ powershell -ExecutionPolicy Bypass -File installer\build.ps1
 BukaMusicDesktop.exe --lang en                     # 指定界面语言：zh / en / ja / ko
 BukaMusicDesktop.exe --page library 192.168.0.10   # 直接打开某台设备的指定页面
 BukaMusicDesktop.exe --navtest settings 192.168.0.10   # 打开设备后自动点一次侧栏
+BukaMusicDesktop.exe --upload-test 192.168.0.10 "D:\song.mp3"   # 只跑一次上传，结果写到 %TEMP%\buka_upload_test.txt
 ```
 
 ## 通信方式

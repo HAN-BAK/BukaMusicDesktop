@@ -309,13 +309,23 @@ public sealed class BukaClient : IDisposable
         }
 
         public override bool CanRead => _inner.CanRead;
-        public override bool CanSeek => false;
+        // Seek and length have to be forwarded: StreamContent derives the
+        // request's Content-Length from them, and the device's upload handler
+        // reads the body by Content-Length. Reporting "not seekable" made
+        // HttpClient send the body chunked, so the device saw an empty file and
+        // answered "文件名或内容为空".
+        public override bool CanSeek => _inner.CanSeek;
         public override bool CanWrite => false;
-        public override long Length => _length;
+        public override long Length => _inner.CanSeek ? _inner.Length : _length;
         public override long Position
         {
-            get => _sent;
-            set => throw new NotSupportedException();
+            get => _inner.CanSeek ? _inner.Position : _sent;
+            set
+            {
+                if (!_inner.CanSeek) throw new NotSupportedException();
+                _inner.Position = value;
+                _sent = value;
+            }
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -330,7 +340,13 @@ public sealed class BukaClient : IDisposable
         }
 
         public override void Flush() => _inner.Flush();
-        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            if (!_inner.CanSeek) throw new NotSupportedException();
+            long position = _inner.Seek(offset, origin);
+            _sent = position;
+            return position;
+        }
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
         protected override void Dispose(bool disposing)
