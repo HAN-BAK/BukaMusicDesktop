@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using BukaMusicDesktop.Controls;
 using BukaMusicDesktop.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -37,6 +38,9 @@ public sealed partial class ControlPage : Page
         LocalAudio.Instance.Updated += OnLocalAudioUpdated;
         Loaded += (_, _) => UpdateLocalAudioUi();
         _verifyTimer.Tick += (_, _) => VerifyShownState();
+        // Border.CornerRadius rounds the card, not the picture inside it: the
+        // cover kept square corners and leaked a dark sliver along the arcs.
+        RoundedClip.Attach(CoverImage, () => 7);
     }
 
     // ------------------------------------------------------------------

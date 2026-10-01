@@ -10,7 +10,7 @@
          lyrics activity: no card, no padding, only a floating header that
          hides itself after a few seconds of no pointer movement. -->
     <Grid x:Name="StageHost">
-        <controls:LyricsStage x:Name="Stage" />
+        <controls:LyricsStage x:Name="Stage" CornerRadius="12" />
 
         <Border x:Name="FloatHeader"
                 HorizontalAlignment="Left" VerticalAlignment="Top"

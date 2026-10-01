@@ -9,6 +9,7 @@ using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 using Windows.Storage.Streams;
@@ -64,6 +65,10 @@ public sealed class LyricsStage : Grid
         _canvas.Draw += OnDraw;
         _canvas.Unloaded += (_, _) => CompositionTarget.Rendering -= OnRendering;
         _canvas.Loaded += (_, _) => CompositionTarget.Rendering += OnRendering;
+        // A composition clip, not UIElement.Clip: the picture is drawn by a
+        // SwapChainPanel (Win2D), and only the composition clip rounds the
+        // swap-chain surface off.
+        RoundedClip.Attach(this, () => Math.Max(CornerRadius.TopLeft, CornerRadius.BottomRight));
     }
 
     /// <summary>Shown by the typographic "no lyrics" scene.</summary>

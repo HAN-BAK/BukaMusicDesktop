@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using BukaMusicDesktop.Controls;
 using BukaMusicDesktop.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -265,6 +266,18 @@ public sealed partial class LibraryPage : Page
         }
         _openGroup = tile.Key;
         RefreshView();
+    }
+
+    /// <summary>
+    /// Album art inside a rounded tile: the border only rounds the card, so the
+    /// picture itself has to be clipped or its square corners poke out.
+    /// </summary>
+    private void OnCoverImageLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement element)
+        {
+            RoundedClip.Attach(element, () => 10);
+        }
     }
 
     private void OnBackToGroups(object sender, RoutedEventArgs e)

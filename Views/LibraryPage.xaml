@@ -235,7 +235,8 @@
                                         Background="{StaticResource CardHoverBrush}">
                                     <Grid>
                                         <Image Source="{x:Bind Cover, Mode=OneWay}"
-                                               Stretch="UniformToFill" />
+                                               Stretch="UniformToFill"
+                                               Loaded="OnCoverImageLoaded" />
                                         <!-- 勾选框只在「管理」模式下出现 -->
                                         <CheckBox IsChecked="{x:Bind IsChecked, Mode=OneWay}"
                                                   Visibility="{x:Bind CheckVisibility, Mode=OneWay}"
