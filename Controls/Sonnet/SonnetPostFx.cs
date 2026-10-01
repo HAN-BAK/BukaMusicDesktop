@@ -18,7 +18,9 @@ public sealed class SonnetPostFx : IDisposable
     public const float Distortion = 0.10f;
     public const float Dispersion = 0.0022f;
     public const float Vignette = 0.35f;
-    public const float Grain = 0.07f;
+    /// <summary>Film grain. Kept subtle: on a monitor at arm's length the same
+    /// value that looks like texture on a TV reads as noise.</summary>
+    public const float Grain = 0.045f;
     public const float Contrast = 0.06f;
     public const float Halftone = 0.16f;
     public const float RgbShift = 0.0018f;

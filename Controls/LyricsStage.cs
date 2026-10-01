@@ -24,7 +24,13 @@ namespace BukaMusicDesktop.Controls;
 public sealed class LyricsStage : Grid
 {
     /// <summary>The scene is rendered at the panel resolution, capped like the Android layer.</summary>
-    private const int MaxSceneWidth = 1600;
+    /// <summary>
+    /// Upper bound for the offscreen scene. It used to be 1600, which meant a
+    /// normal 2K/4K window upscaled the picture (and its film grain with it),
+    /// so the lyrics looked soft and noisy. Rendering close to the window's own
+    /// pixel size keeps the grain fine and the text sharp.
+    /// </summary>
+    private const int MaxSceneWidth = 2560;
     private const float FadeOutMs = 160f;
     private const float FadeInMs = 220f;
 

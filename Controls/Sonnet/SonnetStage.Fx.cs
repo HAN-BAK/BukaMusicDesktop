@@ -533,8 +533,13 @@ public sealed partial class SonnetStage
     {
         _noiseBitmap ??= BuildNoiseBitmap(session.Device);
         if (_noiseBitmap == null) return;
-        float width = _noiseBitmap.SizeInPixels.Width;
-        float height = _noiseBitmap.SizeInPixels.Height;
+        // The noise is tiled in *device pixels*, not scene units: the scene is
+        // scaled up on high resolution windows, which used to blow the grain up
+        // with it and made the lyric screen look noisy.
+        float scale = _viewW > 1f ? _viewPixelWidth / _viewW : 1f;
+        if (scale < 0.1f) scale = 1f;
+        float width = _noiseBitmap.SizeInPixels.Width / scale;
+        float height = _noiseBitmap.SizeInPixels.Height / scale;
         int offsetX = (int)(_frameCounter * 7 % (int)width);
         int offsetY = (int)(_frameCounter * 11 % (int)height);
         var source = new Rect(0, 0, width, height);
@@ -543,7 +548,7 @@ public sealed partial class SonnetStage
             for (float x = -offsetX; x < _viewW; x += width)
             {
                 session.DrawImage(_noiseBitmap, new Rect(x, y, width, height), source,
-                        12f / 255f, CanvasImageInterpolation.NearestNeighbor);
+                        8f / 255f, CanvasImageInterpolation.NearestNeighbor);
             }
         }
     }
