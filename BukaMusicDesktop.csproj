@@ -34,4 +34,10 @@
     <EmbeddedResource Include="Shaders\sonnet_final.bin" />
   </ItemGroup>
 
+  <!-- The icon and the logo are loaded from disk at run time; dotnet publish
+       does not bring them along on its own. -->
+  <ItemGroup>
+    <Content Include="Assets\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

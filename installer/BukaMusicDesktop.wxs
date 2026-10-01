@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSI 安装包定义（WiX v4+ 语法）。
+  先用 dotnet publish -c Release -p:Platform=x64 -p:SelfContained=true -o publish 生成
+  自包含产物，再执行 installer\build.ps1（或 wix build）打包。
+  安装内容全部来自 ..\publish，因此程序自带 .NET 与 Windows App SDK，装完即可运行。
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <?ifndef PublishDir?>
+  <?define PublishDir = "..\publish"?>
+  <?endif?>
+  <Package Name="BukaMusic 控制台"
+           Manufacturer="WeiFanchuan"
+           Version="1.0.0"
+           UpgradeCode="7C4E5B2A-9D31-4F58-8A6E-2B1C3D4E5F60"
+           Scope="perMachine"
+           Language="2052"
+           Codepage="65001">
+    <SummaryInformation Description="BukaMusic 桌面控制台 —— 在电脑上发现并控制局域网内的 BukaMusic 安卓设备" />
+    <MajorUpgrade DowngradeErrorMessage="已经安装了更新版本的 BukaMusic 控制台。" />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="BukaMusic 控制台" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="BukaMusic 控制台" />
+    </StandardDirectory>
+    <StandardDirectory Id="DesktopFolder" />
+
+    <Feature Id="Main" Title="BukaMusic 控制台" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+    </Feature>
+
+    <!-- 控制面板里显示的图标 -->
+    <Icon Id="AppIcon" SourceFile="$(PublishDir)\Assets\app.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+  </Package>
+
+  <Fragment>
+    <!-- 整个发布目录（含自带的 .NET 与 Windows App SDK） -->
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(PublishDir)\**" />
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <!-- 开始菜单（所有用户） -->
+    <Component Id="StartMenuShortcut" Directory="AppMenuFolder"
+               Guid="3F8B6A1D-52C4-4E77-9D0B-6A5E4C3B2A19">
+      <Shortcut Id="StartMenuLink" Name="BukaMusic 控制台"
+                Description="在电脑上发现并控制局域网内的 BukaMusic 安卓设备"
+                Target="[INSTALLFOLDER]BukaMusicDesktop.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="AppIcon" />
+      <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />
+      <RegistryValue Root="HKLM" Key="Software\BukaMusicDesktop" Name="startmenu"
+                     Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <!-- 桌面快捷方式（当前用户） -->
+    <Component Id="DesktopShortcut" Directory="DesktopFolder"
+               Guid="C1D2E3F4-5A6B-47C8-9D0E-1F2A3B4C5D6E">
+      <Shortcut Id="DesktopLink" Name="BukaMusic 控制台"
+                Description="在电脑上发现并控制局域网内的 BukaMusic 安卓设备"
+                Target="[INSTALLFOLDER]BukaMusicDesktop.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="AppIcon" />
+      <RegistryValue Root="HKCU" Key="Software\BukaMusicDesktop" Name="desktop"
+                     Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+</Wix>

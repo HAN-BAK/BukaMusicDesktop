@@ -17,6 +17,19 @@
 
 程序启动后会用 UDP 广播自动发现设备，每个设备显示为一张卡片，点卡片进入控制台；电脑上改的设置会直接写到设备上。
 
+## 下载与安装
+
+到 [Releases](https://github.com/HAN-BAK/BukaMusicDesktop/releases) 下载最新版本，两种形式任选：
+
+| 文件 | 说明 |
+| --- | --- |
+| `BukaMusicDesktop-<版本>-x64.msi` | **安装包**（推荐）：双击安装，装到 `Program Files\BukaMusic 控制台`，自动创建开始菜单和桌面快捷方式，可从“应用和功能”卸载 |
+| `BukaMusicDesktop-<版本>-portable-x64.zip` | **便携版**：解压到任意目录，运行 `BukaMusicDesktop.exe`，不写注册表 |
+
+两种形式都已内置 .NET 与 Windows App SDK，**无需另外安装运行库**。仅支持 64 位 Windows 10 1809 及以上。
+
+> 安装包未做代码签名，首次安装时 Windows 可能提示“未知发布者”，选择“更多信息 → 仍要运行”即可。
+
 ## 功能
 
 **设备**
@@ -58,6 +71,15 @@ dotnet build -c Release -p:Platform=x64
 ```
 bin\x64\Release\net8.0-windows10.0.26100.0\win-x64\BukaMusicDesktop.exe
 ```
+
+打包安装包（需要一次 `dotnet tool install --global wix`）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File installer\build.ps1
+```
+
+会在 `dist` 下生成自包含的 MSI 安装包（安装脚本分两步：先 `dotnet publish` 出自包含产物，
+再交给 WiX 打成 MSI，开始菜单与桌面快捷方式、控制面板图标、卸载入口都由安装包负责）。
 
 ## 使用
 
