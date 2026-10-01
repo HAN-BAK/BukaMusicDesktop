@@ -11,7 +11,7 @@
   <?endif?>
   <Package Name="BukaMusic 控制台"
            Manufacturer="WeiFanchuan"
-           Version="1.0.2"
+           Version="1.0.3"
            UpgradeCode="7C4E5B2A-9D31-4F58-8A6E-2B1C3D4E5F60"
            Scope="perMachine"
            Language="2052"

@@ -174,12 +174,6 @@ public sealed partial class ShellPage : Page
         {
             ContentFrame.Navigate(page, Session);
         }
-        // The lyric screen is a full-bleed PV (the Android version is full screen
-        // too): drop the shell's margins, otherwise the window background shows
-        // up as a dark border around the picture.
-        bool lyrics = page == typeof(LyricsPage);
-        ShellRoot.Margin = lyrics ? new Thickness(0) : new Thickness(18, 14, 18, 12);
-        ContentFrame.Margin = lyrics ? new Thickness(0) : new Thickness(14, 0, 0, 0);
     }
 
     private async void OnOpenWeb(object sender, RoutedEventArgs e)
