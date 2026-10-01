@@ -171,6 +171,9 @@ public sealed partial class LibraryPage : Page
             GroupTitleText.Text = _openGroup;
             GroupSubtitleText.Text = Loc.Current.Text("{0} 首", _items.Count);
         }
+        // The two views have their own selection; only the visible one counts.
+        GroupGrid.SelectedItems.Clear();
+        UpdateDeleteButton();
     }
 
     private string GroupKey(TrackItem item)
@@ -271,20 +274,53 @@ public sealed partial class LibraryPage : Page
 
     private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        DeleteButton.IsEnabled = TrackList.SelectedItems.Count > 0;
+        UpdateDeleteButton();
+    }
+
+    private void OnGroupSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateDeleteButton();
+    }
+
+    /// <summary>
+    /// The delete button works in both views: individual songs in the list, or
+    /// whole albums / artists when the tiles are shown.
+    /// </summary>
+    private void UpdateDeleteButton()
+    {
+        int chosen = TrackList.Visibility == Visibility.Visible
+            ? TrackList.SelectedItems.Count
+            : GroupGrid.SelectedItems.Count;
+        DeleteButton.IsEnabled = chosen > 0;
+        DeleteButton.Content = chosen > 0
+            ? Loc.Current.Text("删除所选（{0}）", chosen)
+            : Loc.Current.Text("删除所选");
     }
 
     private async void OnDelete(object sender, RoutedEventArgs e)
     {
         var session = _session;
         if (session == null) return;
-        var selected = TrackList.SelectedItems.Cast<TrackItem>().ToList();
+        bool tiles = TrackList.Visibility != Visibility.Visible;
+        // Songs directly, or every song of the selected albums / artists.
+        var selected = tiles
+            ? GroupGrid.SelectedItems.Cast<GroupTile>()
+                .SelectMany(tile => tile.Tracks).Distinct().ToList()
+            : TrackList.SelectedItems.Cast<TrackItem>().ToList();
         if (selected.Count == 0) return;
+        string detail = tiles
+            ? Loc.Current.Text("删除所选（{0}）", GroupGrid.SelectedItems.Count) + "："
+              + string.Join("、", GroupGrid.SelectedItems.Cast<GroupTile>()
+                  .Take(3).Select(t => t.Title))
+              + (GroupGrid.SelectedItems.Count > 3 ? "…" : "")
+              + "\n\n"
+            : "";
 
         var dialog = new ContentDialog
         {
             Title = Loc.Current.Text("删除音乐文件"),
-            Content = Loc.Current.Text("将从设备上删除 {0} 个文件，且无法恢复：\n", selected.Count)
+            Content = detail
+                      + Loc.Current.Text("将从设备上删除 {0} 个文件，且无法恢复：\n", selected.Count)
                       + string.Join("\n", selected.Take(5).Select(t => "· " + t.Name))
                       + (selected.Count > 5
                           ? Loc.Current.Text("\n… 以及另外 {0} 个文件", selected.Count - 5)
@@ -346,6 +382,23 @@ public sealed partial class LibraryPage : Page
         UploadProgress.Value = 100;
         UploadStatus.Text = Loc.Current.Text("上传完成：成功 {0} / {1}", ok, files.Count);
         LogBus.Success($"上传完成：成功 {ok} / {files.Count}");
+        if (ok > 0)
+        {
+            // The device rescans after receiving files; wait until they show up in
+            // its library so the list here is fresh without a manual refresh.
+            var sent = files.Select(f => f.Name).ToList();
+            for (int attempt = 0; attempt < 14; attempt++)
+            {
+                await System.Threading.Tasks.Task.Delay(900);
+                var tracks = await session.Client.GetLibraryAsync();
+                if (tracks.Any(t => sent.Any(name =>
+                        string.Equals(name, t.Name, StringComparison.OrdinalIgnoreCase))))
+                {
+                    LogBus.Info("设备已完成曲库刷新");
+                    break;
+                }
+            }
+        }
         await ReloadAsync();
     }
 }

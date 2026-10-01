@@ -132,7 +132,8 @@
                 <!-- 专辑 / 歌手浏览：先看图片和名字，点进去才是歌曲 -->
                 <GridView x:Name="GroupGrid" Grid.Row="1" Grid.RowSpan="2"
                           Padding="6" Visibility="Collapsed"
-                          SelectionMode="None" IsItemClickEnabled="True"
+                          SelectionMode="Multiple" IsItemClickEnabled="True"
+                          SelectionChanged="OnGroupSelectionChanged"
                           ItemClick="OnGroupTileClick">
                     <GridView.ItemTemplate>
                         <DataTemplate x:DataType="core:GroupTile">

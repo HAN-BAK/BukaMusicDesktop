@@ -206,6 +206,7 @@ public sealed class Loc
         Add("按歌手", "By artist", "アーティスト別", "아티스트별");
         Add("上传音乐", "Upload music", "音楽をアップロード", "음악 업로드");
         Add("删除所选", "Delete selected", "選択項目を削除", "선택 항목 삭제");
+        Add("删除所选（{0}）", "Delete selected ({0})", "選択項目を削除（{0}）", "선택 항목 삭제 ({0})");
         Add("刷新列表", "Refresh list", "リストを更新", "목록 새로 고침");
         Add("← 返回", "← Back", "← 戻る", "← 뒤로");
         Add("标题 / 文件名", "Title / file name", "タイトル / ファイル名", "제목 / 파일 이름");
