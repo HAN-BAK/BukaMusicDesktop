@@ -6,7 +6,7 @@
     xmlns:controls="using:BukaMusicDesktop.Controls"
     Background="{StaticResource BgBrush}">
 
-    <Grid Margin="18,14,18,12">
+    <Grid x:Name="ShellRoot" Margin="18,14,18,12">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="210" />
             <ColumnDefinition Width="*" />
