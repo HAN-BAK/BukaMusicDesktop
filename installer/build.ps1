@@ -7,7 +7,7 @@
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$version = "1.0.1"
+$version = "1.0.2"
 
 Write-Host "==> 发布自包含程序（自带 .NET 与 Windows App SDK）"
 dotnet publish "$root\BukaMusicDesktop.csproj" -c Release -p:Platform=x64 -p:SelfContained=true -o "$root\publish"
