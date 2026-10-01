@@ -46,7 +46,9 @@ public sealed class SonnetPostFx : IDisposable
             _blur = new GaussianBlurEffect
             {
                 BlurAmount = 0f,
-                BorderMode = EffectBorderMode.Soft,
+                // Soft let the blur fade the edges into transparent black, which
+                // showed up as a big black frame while the shots cross-fade.
+                BorderMode = EffectBorderMode.Hard,
                 Optimization = EffectOptimization.Balanced,
             };
         }
