@@ -23,9 +23,14 @@ namespace BukaMusicDesktop.Controls;
 /// </summary>
 public sealed class LyricsStage : Grid
 {
-    /// <summary>The scene is rendered at the panel resolution, capped like the Android layer.</summary>
-    /// <summary>The scene is rendered at the panel resolution, capped like the Android layer.</summary>
-    private const int MaxSceneWidth = 1600;
+    /// <summary>
+    /// Upper bound for the offscreen scene. It has to stay above the window's
+    /// own pixel width: rendering smaller and then upscaling blurs the type,
+    /// and the film grain (which the print stack adds per output pixel) then
+    /// stands out against the softened picture and reads as noise.
+    /// 2560 covers a 1440p window 1:1.
+    /// </summary>
+    private const int MaxSceneWidth = 2560;
     private const float FadeOutMs = 160f;
     private const float FadeInMs = 220f;
 

@@ -291,7 +291,9 @@ public static class LyricsProbe
         File.WriteAllText(Path.Combine(outputDirectory, "sequence.csv"), csv.ToString());
         File.WriteAllText(Path.Combine(outputDirectory, "sequence.txt"),
                 $"frames={index} saved={saved} viewport={SonnetStage.VW}x" +
-                $"{SonnetStage.VW * height / (float)width:F2} scene={width}x{height}");
+                $"{SonnetStage.VW * height / (float)width:F2} scene={width}x{height} " +
+                $"(this probe draws the scene at the requested size; the app's own " +
+                $"LyricsStage.MaxSceneWidth cap is not applied here)");
     }
 
     private readonly struct EdgeMetrics
