@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BukaMusicDesktop.Views.LibraryPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:core="using:BukaMusicDesktop.Core"
+    xmlns:controls="using:BukaMusicDesktop.Controls"
+    Background="{StaticResource BgBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource SectionCardStyle}">
+            <StackPanel Spacing="12">
+                <!-- The count sits next to the title so it always has room and
+                     scrolls on its own when the library is bigger than the row. -->
+                <Grid>
+                    <TextBlock Text="曲库与文件" HorizontalAlignment="Left"
+                               Style="{StaticResource SectionTitleStyle}" />
+                    <controls:MarqueeText x:Name="CountText" Text=""
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Top"
+                                          TextAlignment="Right" Margin="160,0,0,0"
+                                          Style="{StaticResource MarqueeLabelStyle}" />
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBox x:Name="SearchBox" Width="240" Height="34"
+                             PlaceholderText="歌曲名"
+                             TextChanged="OnSearchChanged" />
+                    <ComboBox x:Name="GroupCombo" Width="150" Height="34"
+                              SelectionChanged="OnGroupChanged">
+                        <ComboBoxItem Content="默认顺序" Tag="none" />
+                        <ComboBoxItem Content="按专辑" Tag="album" />
+                        <ComboBoxItem Content="按歌手" Tag="artist" />
+                    </ComboBox>
+                    <Button Content="上传音乐" Style="{StaticResource AccentButtonStyle}"
+                            Click="OnUpload" />
+                    <Button x:Name="DeleteButton" Content="删除所选" IsEnabled="False"
+                            Style="{StaticResource DangerButtonStyle}" Click="OnDelete" />
+                    <Button Content="刷新列表" Style="{StaticResource GhostButtonStyle}"
+                            Click="OnRefresh" />
+                </StackPanel>
+                <controls:MarqueeText x:Name="UploadStatus" Text="" MaxWidth="460"
+                                      FontFamily="{StaticResource UiFont}" FontSize="12"
+                                      Foreground="{StaticResource TextSecondaryBrush}" />
+                <ProgressBar x:Name="UploadProgress" Minimum="0" Maximum="100"
+                             Visibility="Collapsed" Height="4" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- 打开某张专辑 / 某位歌手后的返回条 -->
+                <StackPanel x:Name="GroupHeaderBar" Grid.Row="0" Orientation="Horizontal"
+                            Spacing="12" Padding="12,8,12,10" Visibility="Collapsed">
+                    <Button Content="← 返回" Style="{StaticResource GhostButtonStyle}"
+                            Click="OnBackToGroups" />
+                    <controls:MarqueeText x:Name="GroupTitleText" Text="" MaxWidth="560"
+                                          FontFamily="{StaticResource UiFont}" FontSize="15"
+                                          FontWeight="SemiBold"
+                                          Foreground="{StaticResource TextPrimaryBrush}" />
+                    <controls:MarqueeText x:Name="GroupSubtitleText" Text="" MaxWidth="200"
+                                          Style="{StaticResource MarqueeLabelStyle}" />
+                </StackPanel>
+
+                <Grid x:Name="ListHeaderRow" Grid.Row="1" Padding="12,8,12,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="180" />
+                        <ColumnDefinition Width="160" />
+                        <ColumnDefinition Width="70" />
+                        <ColumnDefinition Width="90" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="标题 / 文件名" Style="{StaticResource LabelTextStyle}" />
+                    <TextBlock Grid.Column="1" Text="歌手" Style="{StaticResource LabelTextStyle}" />
+                    <TextBlock Grid.Column="2" Text="专辑" Style="{StaticResource LabelTextStyle}" />
+                    <TextBlock Grid.Column="3" Text="时长" Style="{StaticResource LabelTextStyle}" />
+                    <TextBlock Grid.Column="4" Text="大小" Style="{StaticResource LabelTextStyle}" />
+                </Grid>
+
+                <ListView x:Name="TrackList" Grid.Row="2" SelectionMode="Extended"
+                          IsItemClickEnabled="True" ItemClick="OnTrackClick"
+                          SelectionChanged="OnSelectionChanged">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="core:TrackItem">
+                            <Grid Padding="4,7,4,7">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="90" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE768;" FontSize="11"
+                                                  Visibility="{x:Bind CurrentVisibility, Mode=OneWay}"
+                                                  Foreground="{StaticResource AccentBrush}"
+                                                  VerticalAlignment="Center" />
+                                        <controls:MarqueeText Text="{x:Bind Display}"
+                                                              FontFamily="{StaticResource UiFont}"
+                                                              FontSize="13"
+                                                              Foreground="{x:Bind TitleBrush, Mode=OneWay}"
+                                                              VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <controls:MarqueeText Text="{x:Bind RelativePath}"
+                                                          FontFamily="Consolas" FontSize="11"
+                                                          Foreground="{StaticResource TextSecondaryBrush}" />
+                                </StackPanel>
+                                <controls:MarqueeText Grid.Column="1" Text="{x:Bind Artist}"
+                                                      Style="{StaticResource MarqueeValueStyle}" />
+                                <controls:MarqueeText Grid.Column="2" Text="{x:Bind Album}"
+                                                      Style="{StaticResource MarqueeValueStyle}" />
+                                <TextBlock Grid.Column="3" Text="{x:Bind DurationText}"
+                                           Style="{StaticResource LabelTextStyle}" />
+                                <TextBlock Grid.Column="4" Text="{x:Bind SizeText}"
+                                           Style="{StaticResource LabelTextStyle}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <!-- 专辑 / 歌手浏览：先看图片和名字，点进去才是歌曲 -->
+                <GridView x:Name="GroupGrid" Grid.Row="1" Grid.RowSpan="2"
+                          Padding="6" Visibility="Collapsed"
+                          SelectionMode="None" IsItemClickEnabled="True"
+                          ItemClick="OnGroupTileClick">
+                    <GridView.ItemTemplate>
+                        <DataTemplate x:DataType="core:GroupTile">
+                            <StackPanel Width="166" Spacing="8" Padding="4,4,4,10">
+                                <Border Width="158" Height="158" CornerRadius="10"
+                                        Background="{StaticResource CardHoverBrush}">
+                                    <Image Source="{x:Bind Cover, Mode=OneWay}"
+                                           Stretch="UniformToFill" />
+                                </Border>
+                                <controls:MarqueeText Text="{x:Bind Title}"
+                                                      FontFamily="{StaticResource UiFont}"
+                                                      FontSize="13" FontWeight="SemiBold"
+                                                      Foreground="{StaticResource TextPrimaryBrush}" />
+                                <controls:MarqueeText Text="{x:Bind Subtitle}"
+                                                      Style="{StaticResource MarqueeLabelStyle}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </GridView.ItemTemplate>
+                </GridView>
+
+                <TextBlock x:Name="LoadingText" Grid.Row="2" Text="正在读取曲库…"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Style="{StaticResource LabelTextStyle}" />
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BukaMusicDesktop.Views.LyricsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:BukaMusicDesktop.Controls"
+    Background="{StaticResource BgBrush}">
+
+    <!-- The lyric view fills the whole content area, exactly like the Android
+         lyrics activity: no card, no padding, only a floating header that
+         hides itself after a few seconds of no pointer movement. -->
+    <Grid x:Name="StageHost">
+        <controls:LyricsStage x:Name="Stage" />
+
+        <Border x:Name="FloatHeader"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="16,14,0,0" Padding="16,10"
+                CornerRadius="12"
+                Background="#B3141B26"
+                BorderBrush="{StaticResource StrokeBrush}" BorderThickness="1"
+                Opacity="1">
+            <StackPanel Orientation="Horizontal" Spacing="14">
+                <StackPanel Spacing="2" VerticalAlignment="Center">
+                    <controls:MarqueeText x:Name="TrackText" Text="—" MaxWidth="420"
+                                          FontFamily="{StaticResource UiFont}" FontSize="15"
+                                          FontWeight="SemiBold"
+                                          Foreground="{StaticResource TextPrimaryBrush}" />
+                    <controls:MarqueeText x:Name="InfoText" Text="" MaxWidth="420"
+                                          FontFamily="{StaticResource UiFont}" FontSize="12"
+                                          Foreground="{StaticResource TextSecondaryBrush}" />
+                </StackPanel>
+                <Button Content="重新读取" Style="{StaticResource GhostButtonStyle}"
+                        VerticalAlignment="Center" Click="OnReload" />
+            </StackPanel>
+        </Border>
+
+        <TextBlock x:Name="EmptyHint" Text=""
+                   HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                   Margin="0,0,0,18"
+                   Style="{StaticResource LabelTextStyle}" />
+    </Grid>
+</Page>

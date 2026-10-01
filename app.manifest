@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="BukaMusicDesktop.app" />
+
+  <!--
+    Win2D is a third-party WinRT component. A packaged (MSIX) app registers it
+    through the appx manifest, but this app is unpackaged, so the activatable
+    classes have to be declared here (registration-free WinRT). Without these
+    entries creating a CanvasControl fails with a COM activation error.
+  -->
+  <file name="Microsoft.Graphics.Canvas.dll">
+    <activatableClass name="Microsoft.Graphics.Canvas.CanvasDevice" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.CanvasBitmap" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.CanvasRenderTarget" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.CanvasTextFormat" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.CanvasTextLayout" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.CanvasCommandList" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Geometry.CanvasPathBuilder" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Geometry.CanvasGeometry" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.PixelShaderEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.CanvasSpriteBatch" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.CanvasVirtualBitmap" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Brushes.CanvasSolidColorBrush" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Brushes.CanvasImageBrush" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Brushes.CanvasLinearGradientBrush" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Brushes.CanvasRadialGradientBrush" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.AlphaMaskEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.ArithmeticCompositeEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.BlendEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.BrightnessEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.ColorMatrixEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.ColorSourceEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.CompositeEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.ContrastEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.CrossFadeEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.DirectionalBlurEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.DisplacementMapEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.GaussianBlurEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.HueRotateEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.LinearTransferEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.LuminanceToAlphaEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.OpacityEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.PremultiplyEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.SaturationEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.SepiaEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.ShadowEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.Transform3DEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.TurbulenceEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.UnPremultiplyEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.Effects.VignetteEffect" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.UI.Xaml.CanvasVirtualControl" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.UI.Xaml.CanvasAnimatedControl" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+    <activatableClass name="Microsoft.Graphics.Canvas.UI.Xaml.CanvasImageSource" threadingModel="both" xmlns="urn:schemas-microsoft-com:winrt.v1" />
+  </file>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+    </windowsSettings>
+  </application>
+</assembly>

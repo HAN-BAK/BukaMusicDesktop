@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="BukaMusicDesktop.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:BukaMusicDesktop.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="{StaticResource BgBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="30" />
+        </Grid.RowDefinitions>
+
+        <!-- 自定义标题栏 -->
+        <Grid x:Name="TitleBarGrid" Grid.Row="0" Background="{StaticResource BgElevatedBrush}">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0"
+                        Spacing="10">
+                <Image Source="ms-appx:///Assets/logo.png" Width="18" Height="18"
+                       Stretch="Uniform" />
+                <TextBlock x:Name="TitleAppText" Text="BukaMusic 控制台" VerticalAlignment="Center"
+                           FontFamily="{StaticResource UiFont}" FontSize="13"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
+                <controls:MarqueeText x:Name="TitleDeviceText" Text="" MaxWidth="420"
+                                      VerticalAlignment="Center"
+                                      FontFamily="{StaticResource UiFont}" FontSize="12"
+                                      Foreground="{StaticResource TextSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- 内容区：设备卡片页 或 设备控制台 -->
+        <Frame x:Name="RootFrame" Grid.Row="1" Background="{StaticResource BgBrush}" />
+
+        <!-- 状态栏（右下角可切换界面语言） -->
+        <Grid x:Name="StatusBarRoot" Grid.Row="2" Background="{StaticResource BgElevatedBrush}" Padding="14,0,8,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <controls:MarqueeText x:Name="StatusText" Grid.Column="0" Text=""
+                                  VerticalAlignment="Center" Margin="0,0,10,0"
+                                  FontFamily="{StaticResource UiFont}" FontSize="12"
+                                  Foreground="{StaticResource TextSecondaryBrush}" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                        VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE774;" FontSize="11"
+                          Foreground="{StaticResource TextSecondaryBrush}" />
+                <ComboBox x:Name="LanguageBox" MinWidth="78" Height="22" MinHeight="22"
+                          FontSize="11" Padding="7,0,20,0" VerticalAlignment="Center"
+                          SelectionChanged="OnLanguageChanged">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="MinHeight" Value="26" />
+                            <Setter Property="FontSize" Value="12" />
+                            <Setter Property="Padding" Value="8,2,8,2" />
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
+                    <ComboBoxItem Content="中文" Tag="zh" />
+                    <ComboBoxItem Content="English" Tag="en" />
+                    <ComboBoxItem Content="日本語" Tag="ja" />
+                    <ComboBoxItem Content="한국어" Tag="ko" />
+                </ComboBox>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

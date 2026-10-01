@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BukaMusicDesktop.Views.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource BgBrush}">
+
+    <ScrollViewer>
+        <StackPanel>
+            <Border Style="{StaticResource SectionCardStyle}">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="14">
+                        <Image Source="ms-appx:///Assets/logo.png" Width="48" Height="48"
+                               Stretch="Uniform" />
+                        <StackPanel VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="BukaMusic 控制台" FontFamily="{StaticResource UiFont}"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Android 音乐播放器 / AirPlay 接收 / 多房间同步 的桌面控制端"
+                                       Style="{StaticResource LabelTextStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource HintTextStyle}"
+                               Text="本程序通过局域网与安装了 BukaMusic 的安卓设备通信：UDP 广播自动发现设备，HTTP 接口（/api/*）读取状态、控制播放、上传与删除文件、读写设置。" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Content="打开项目主页" Style="{StaticResource GhostButtonStyle}"
+                                Click="OnOpenProject" />
+                        <Button Content="打开设置文件位置" Style="{StaticResource GhostButtonStyle}"
+                                Click="OnOpenSettingsFolder" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SectionCardStyle}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="设备端接口" Style="{StaticResource SectionTitleStyle}" />
+                    <TextBlock Style="{StaticResource HintTextStyle}"
+                               Text="GET /api/info　设备信息（也是 UDP 自动发现的应答内容）&#x0a;GET /api/state　播放状态&#x0a;GET/POST /api/settings　读取 / 修改设置&#x0a;GET /api/library　曲库列表&#x0a;POST /api/control　播放控制（play / pause / next / previous / seek / volume / mode / rescan）&#x0a;POST /api/delete　删除曲库中的文件&#x0a;GET /api/cover　当前封面图片&#x0a;POST /upload　上传音乐（网页端与控制台共用）" />
+                    <TextBlock Style="{StaticResource HintTextStyle}"
+                               Text="发现端口：UDP 47101　·　控制端口：设备上的 8080（若被占用则自动顺延）" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

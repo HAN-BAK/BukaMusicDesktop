@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BukaMusicDesktop.Views.ShellPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:BukaMusicDesktop.Controls"
+    Background="{StaticResource BgBrush}">
+
+    <Grid Margin="18,14,18,12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="210" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- 左侧导航 -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}"
+                BorderBrush="{StaticResource StrokeBrush}" BorderThickness="1"
+                CornerRadius="10" Padding="10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- 当前设备 -->
+                <StackPanel Grid.Row="0" Spacing="4" Margin="4,2,4,14">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Ellipse x:Name="OnlineDot" Width="9" Height="9"
+                                 VerticalAlignment="Center"
+                                 Fill="{StaticResource SuccessBrush}" />
+                        <controls:MarqueeText x:Name="DeviceNameText" Text="设备"
+                                              VerticalAlignment="Center"
+                                              FontFamily="{StaticResource UiFont}" FontSize="15"
+                                              FontWeight="SemiBold"
+                                              Foreground="{StaticResource TextPrimaryBrush}" />
+                    </StackPanel>
+                    <controls:MarqueeText x:Name="DeviceEndPointText" Text=""
+                                          FontFamily="Consolas" FontSize="12"
+                                          Foreground="{StaticResource AccentBrush}" />
+                    <controls:MarqueeText x:Name="DeviceDetailText" Text=""
+                                          FontFamily="{StaticResource UiFont}" FontSize="11"
+                                          Foreground="{StaticResource TextSecondaryBrush}" />
+                </StackPanel>
+
+                <Rectangle Grid.Row="1" Height="1" Fill="{StaticResource StrokeBrush}"
+                           Margin="2,0,2,10" />
+
+                <StackPanel Grid.Row="2" Spacing="2">
+                    <ToggleButton x:Name="NavControl" AutomationProperties.Name="播放控制" IsChecked="True"
+                                  Style="{StaticResource NavButtonStyle}"
+                                  Click="OnNavClick" Tag="control">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE768;" FontSize="15" />
+                            <controls:MarqueeText Text="播放控制" MaxWidth="130" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="NavLyrics" AutomationProperties.Name="歌词预览"
+                                  Style="{StaticResource NavButtonStyle}"
+                                  Click="OnNavClick" Tag="lyrics">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE8D6;" FontSize="15" />
+                            <controls:MarqueeText Text="歌词预览" MaxWidth="130" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="NavMultiRoom" AutomationProperties.Name="多房间同步"
+                                  Style="{StaticResource NavButtonStyle}"
+                                  Click="OnNavClick" Tag="multicast">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE8B7;" FontSize="15" />
+                            <controls:MarqueeText Text="多房间同步" MaxWidth="130" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="NavLibrary" AutomationProperties.Name="曲库与文件"
+                                  Style="{StaticResource NavButtonStyle}"
+                                  Click="OnNavClick" Tag="library">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE8F1;" FontSize="15" />
+                            <controls:MarqueeText Text="曲库与文件" MaxWidth="130" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="NavSettings" AutomationProperties.Name="设置"
+                                  Style="{StaticResource NavButtonStyle}"
+                                  Click="OnNavClick" Tag="settings">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE713;" FontSize="15" />
+                            <controls:MarqueeText Text="设置" MaxWidth="130" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="NavLogs" AutomationProperties.Name="运行日志"
+                                  Style="{StaticResource NavButtonStyle}"
+                                  Click="OnNavClick" Tag="logs">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE9D9;" FontSize="15" />
+                            <controls:MarqueeText Text="运行日志" MaxWidth="130" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="NavAbout" AutomationProperties.Name="关于"
+                                  Style="{StaticResource NavButtonStyle}"
+                                  Click="OnNavClick" Tag="about">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon Glyph="&#xE946;" FontSize="15" />
+                            <controls:MarqueeText Text="关于" MaxWidth="130" />
+                        </StackPanel>
+                    </ToggleButton>
+                </StackPanel>
+
+                <StackPanel Grid.Row="3" Spacing="8">
+                    <Button Style="{StaticResource GhostButtonStyle}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            Click="OnOpenWeb">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <FontIcon Glyph="&#xE774;" FontSize="14" />
+                            <controls:MarqueeText Text="打开网页上传页" MaxWidth="130" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource GhostButtonStyle}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                            Click="OnBack">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <FontIcon Glyph="&#xE8AC;" FontSize="14" />
+                            <controls:MarqueeText Text="切换设备" MaxWidth="130" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 右侧内容 -->
+        <Frame x:Name="ContentFrame" Grid.Column="1" Margin="14,0,0,0" />
+    </Grid>
+</Page>

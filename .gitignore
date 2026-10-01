@@ -1,0 +1,14 @@
+# 生成物
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# 运行日志与本地配置
+*.log
+*.tmp
+
+# 系统
+.DS_Store
+Thumbs.db
