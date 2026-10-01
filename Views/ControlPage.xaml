@@ -64,11 +64,13 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock x:Name="PositionText" Grid.Column="0" Text="0:00"
+                                   VerticalAlignment="Center"
                                    Style="{StaticResource LabelTextStyle}" />
                         <Slider x:Name="ProgressSlider" Grid.Column="1" Minimum="0" Maximum="1000"
                                 Margin="12,0,12,0" VerticalAlignment="Center"
                                 ValueChanged="OnProgressChanged" />
                         <TextBlock x:Name="DurationText" Grid.Column="2" Text="0:00"
+                                   VerticalAlignment="Center"
                                    Style="{StaticResource LabelTextStyle}" />
                     </Grid>
 
@@ -104,6 +106,8 @@
                                 Minimum="0" Maximum="40" StepFrequency="1"
                                 ValueChanged="OnVolumeChanged" />
                         <TextBlock x:Name="VolumeText" Grid.Column="2" Text="0"
+                                   VerticalAlignment="Center" MinWidth="44"
+                                   TextAlignment="Right"
                                    Style="{StaticResource LabelTextStyle}" />
                     </Grid>
 
@@ -138,12 +142,14 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock x:Name="LocalPositionText" Grid.Column="0" Text="0:00"
+                                   VerticalAlignment="Center"
                                    Style="{StaticResource LabelTextStyle}" />
                         <Slider x:Name="LocalProgressSlider" Grid.Column="1"
                                 Minimum="0" Maximum="1000" Margin="12,0,12,0"
                                 VerticalAlignment="Center"
                                 ValueChanged="OnLocalProgressChanged" />
                         <TextBlock x:Name="LocalDurationText" Grid.Column="2" Text="0:00"
+                                   VerticalAlignment="Center"
                                    Style="{StaticResource LabelTextStyle}" />
                     </Grid>
 

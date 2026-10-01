@@ -164,7 +164,7 @@ public sealed partial class ControlPage : Page
                 _suppressVolume = true;
                 VolumeSlider.Maximum = Math.Max(1, state.VolumeMax);
                 VolumeSlider.Value = state.Volume;
-                VolumeText.Text = $"{state.Volume} / {state.VolumeMax}";
+                VolumeText.Text = Percent(state.Volume, state.VolumeMax);
                 _suppressVolume = false;
             }
         });
@@ -231,7 +231,7 @@ public sealed partial class ControlPage : Page
     {
         if (_suppressVolume || _session == null) return;
         var value = (int)Math.Round(e.NewValue);
-        VolumeText.Text = $"{value} / {_session.State.VolumeMax}";
+        VolumeText.Text = Percent(value, _session.State.VolumeMax);
         if (!_draggingVolume)
         {
             SendVolume(value);
@@ -253,6 +253,12 @@ public sealed partial class ControlPage : Page
             new System.Collections.Generic.Dictionary<string, object> { ["value"] = value });
     }
 
+    /// <summary>Volume shown as a percentage of the device's own scale.</summary>
+    private static string Percent(int value, int max)
+    {
+        int top = Math.Max(1, max);
+        return $"{(int)Math.Round(value * 100d / top)}%";
+    }
     private static string FormatMs(int ms)
     {
         if (ms <= 0) return "0:00";
