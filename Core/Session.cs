@@ -72,6 +72,7 @@ public sealed class Session : IDisposable
         State.HasCover = state.HasCover;
         State.Volume = state.Volume;
         State.VolumeMax = state.VolumeMax;
+        State.Screen = state.Screen;
         StateUpdatedAt = DateTime.Now;
         StateUpdated?.Invoke();
     }

@@ -41,6 +41,18 @@ public sealed partial class ControlPage : Page
 
     private void OnLocalAudioUpdated() => DispatcherQueue.TryEnqueue(UpdateLocalAudioUi);
 
+    /// <summary>Switches the device between its lyric screen and playback screen.</summary>
+    private async void OnDeviceScreen(object sender, RoutedEventArgs e)
+    {
+        var session = _session;
+        if (session == null) return;
+        bool lyrics = session.State.IsLyricsScreen;
+        bool ok = await session.Client.ControlAsync(lyrics ? "openMain" : "openLyrics");
+        LogBus.Info(ok
+            ? (lyrics ? "已请求设备切回播放界面" : "已请求设备打开歌词界面")
+            : "切换设备界面失败");
+    }
+
     /// <summary>Mirrors the local player's state into the transport card.</summary>
     private void UpdateLocalAudioUi()
     {
@@ -167,6 +179,9 @@ public sealed partial class ControlPage : Page
                 VolumeText.Text = Percent(state.Volume, state.VolumeMax);
                 _suppressVolume = false;
             }
+            // 设备显示歌词页时按钮变成「播放界面」，点一下切回主播放界面。
+            DeviceScreenButton.Content = Loc.Current.Text(
+                state.IsLyricsScreen ? "播放界面" : "歌词界面");
         });
 
         _ = RefreshCoverAsync();

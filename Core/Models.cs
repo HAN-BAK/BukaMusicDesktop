@@ -26,6 +26,7 @@ public sealed class DeviceState : INotifyPropertyChanged
     private bool _hasCover;
     private int _volume;
     private int _volumeMax = 40;
+    private string _screen = "main";
 
     public string Source { get => _source; set => Set(ref _source, value, nameof(Source), nameof(SourceText)); }
     public bool Playing { get => _playing; set => Set(ref _playing, value); }
@@ -44,6 +45,10 @@ public sealed class DeviceState : INotifyPropertyChanged
     public bool HasCover { get => _hasCover; set => Set(ref _hasCover, value); }
     public int Volume { get => _volume; set => Set(ref _volume, value); }
     public int VolumeMax { get => _volumeMax; set => Set(ref _volumeMax, value); }
+    /// <summary>Screen the device shows: "lyrics" or "main".</summary>
+    public string Screen { get => _screen; set => Set(ref _screen, value, nameof(IsLyricsScreen)); }
+
+    public bool IsLyricsScreen => string.Equals(_screen, "lyrics", StringComparison.OrdinalIgnoreCase);
 
     public string SourceText => Source switch
     {

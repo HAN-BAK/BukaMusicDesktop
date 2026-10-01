@@ -64,6 +64,7 @@ public sealed class BukaClient : IDisposable
             HasCover = Bool(root, "hasCover"),
             Volume = Int(root, "volume"),
             VolumeMax = Math.Max(1, Int(root, "volumeMax")),
+            Screen = Str(root, "screen").Length == 0 ? "main" : Str(root, "screen"),
         };
     }
 

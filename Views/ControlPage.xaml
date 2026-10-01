@@ -114,6 +114,10 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                         <Button Content="重新扫描音乐" Style="{StaticResource GhostButtonStyle}"
                                 Click="OnRescan" />
+                        <!-- 远程切换设备屏幕：设备显示歌词页时这里变成「播放界面」 -->
+                        <Button x:Name="DeviceScreenButton" Content="歌词界面"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Click="OnDeviceScreen" />
                     </StackPanel>
                 </StackPanel>
             </Border>
