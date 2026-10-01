@@ -36,6 +36,13 @@ public sealed partial class SonnetStage : IDisposable
     private const float BackdropMaskIdle = 0.18f;
     /// <summary>Time constant of the smoothing that hides line-boundary steps.</summary>
     private const float BackdropMaskSmoothMs = 620f;
+    /// <summary>
+    /// How far the backdrop is scaled past the frame (3% per side). The blurred
+    /// picture and the layers above it can shift by a few dozen pixels while the
+    /// lyrics sway; without this the flat base colour showed as a hard bordered
+    /// band along the edges.
+    /// </summary>
+    private const float BackdropOverscan = 0.03f;
     /// <summary>Crossfade length when the blurred cover changes.</summary>
     private const long BackdropFadeMs = 650L;
 

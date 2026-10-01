@@ -200,6 +200,12 @@ public sealed partial class SonnetStage
         session.FillRectangle(0f, 0f, _viewW, _viewH, StageBaseColor);
         if (_backdrop != null)
         {
+            // Overscan: the backdrop covers a few percent beyond the frame so a
+            // shifted layer can never expose the flat base colour as a border.
+            float overscanX = _viewW * BackdropOverscan;
+            float overscanY = _viewH * BackdropOverscan;
+            var backdropRect = new Rect(-overscanX, -overscanY,
+                    _viewW + overscanX * 2f, _viewH + overscanY * 2f);
             float fade = 1f;
             if (_backdropPrev != null)
             {
@@ -214,11 +220,11 @@ public sealed partial class SonnetStage
             }
             if (_backdropPrev != null)
             {
-                session.DrawImage(_backdropPrev, new Rect(0, 0, _viewW, _viewH),
+                session.DrawImage(_backdropPrev, backdropRect,
                         new Rect(0, 0, _backdropPrev.SizeInPixels.Width, _backdropPrev.SizeInPixels.Height),
                         1f - fade, CanvasImageInterpolation.Linear);
             }
-            session.DrawImage(_backdrop, new Rect(0, 0, _viewW, _viewH),
+            session.DrawImage(_backdrop, backdropRect,
                     new Rect(0, 0, _backdrop.SizeInPixels.Width, _backdrop.SizeInPixels.Height),
                     fade, CanvasImageInterpolation.Linear);
             float mask = BackgroundMaskAlpha(positionMs, now);
