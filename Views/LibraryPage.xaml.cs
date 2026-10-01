@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
+using Windows.Storage;
 using Windows.Storage.Pickers;
 
 namespace BukaMusicDesktop.Views;
@@ -25,6 +26,8 @@ public sealed partial class LibraryPage : Page
     private readonly ObservableCollection<TrackItem> _items = new();
     private readonly List<TrackItem> _all = new();
     private readonly ObservableCollection<GroupTile> _tiles = new();
+    /// <summary>Hides the upload bar five seconds after a batch finishes.</summary>
+    private readonly DispatcherTimer _uploadHideTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private Session? _session;
     private string _groupBy = "none";
     /// <summary>True while the「管理」mode shows tick boxes and counts them.</summary>
@@ -38,6 +41,12 @@ public sealed partial class LibraryPage : Page
         InitializeComponent();
         TrackList.ItemsSource = _items;
         GroupGrid.ItemsSource = _tiles;
+        _uploadHideTimer.Tick += (_, _) =>
+        {
+            _uploadHideTimer.Stop();
+            UploadProgress.Visibility = Visibility.Collapsed;
+            UploadProgress.Value = 0;
+        };
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -506,28 +515,86 @@ public sealed partial class LibraryPage : Page
         var files = await picker.PickMultipleFilesAsync();
         if (files == null || files.Count == 0) return;
 
+        // Same rule as the web page's file list: one batch never uploads the
+        // same file (name + size) twice, and the skipped one is reported with
+        // the same wording.
+        var batch = new List<StorageFile>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (StorageFile file in files)
+        {
+            long size = 0;
+            try
+            {
+                var properties = await file.GetBasicPropertiesAsync();
+                size = (long)properties.Size;
+            }
+            catch (Exception)
+            {
+                // Size is only used to spot duplicates; a failure is not fatal.
+            }
+            if (!seen.Add($"{file.Name}|{size}"))
+            {
+                string dup = Loc.Current.Text("{0}：已在列表中", file.Name);
+                UploadStatus.Text = dup;
+                LogBus.Warn(dup);
+                continue;
+            }
+            batch.Add(file);
+        }
+        if (batch.Count == 0)
+        {
+            return;
+        }
+
         UploadProgress.Visibility = Visibility.Visible;
+        UploadProgress.Value = 0;
+        _uploadHideTimer.Stop();
         int done = 0;
         int ok = 0;
-        foreach (var file in files)
+        bool batchDone = false;
+        var reasons = new List<string>();
+        foreach (StorageFile file in batch)
         {
             UploadStatus.Text = Loc.Current.Text("正在上传 ({0}/{1})：{2}",
-                done + 1, files.Count, file.Name);
-            UploadProgress.Value = done * 100d / files.Count;
-            if (await session.Client.UploadAsync(file.Path))
+                done + 1, batch.Count, file.Name);
+            // The bar covers the whole batch; each file reports its own bytes.
+            double fileShare = 100d / batch.Count;
+            var progress = new Progress<double>(fraction =>
+            {
+                // Progress<T> posts to the UI thread, so a late callback can
+                // arrive after the batch finished; that must not move the bar.
+                if (batchDone) return;
+                UploadProgress.Value = Math.Min(100d, done * fileShare + fraction * fileShare);
+            });
+            UploadOutcome outcome = await session.Client.UploadAsync(file.Path, progress);
+            if (outcome.Ok)
             {
                 ok++;
             }
+            else if (!string.IsNullOrWhiteSpace(outcome.Message))
+            {
+                reasons.Add(outcome.Message);
+            }
             done++;
         }
+        batchDone = true;
         UploadProgress.Value = 100;
-        UploadStatus.Text = Loc.Current.Text("上传完成：成功 {0} / {1}", ok, files.Count);
-        LogBus.Success($"上传完成：成功 {ok} / {files.Count}");
+        string summary = Loc.Current.Text("全部完成：成功 {0}，失败 {1}", ok, done - ok);
+        // The web page pops one toast per failure; the console has a single
+        // status line, so the reason of the last failure goes with the count.
+        if (reasons.Count > 0)
+        {
+            summary += " · " + reasons[^1];
+        }
+        UploadStatus.Text = summary;
+        LogBus.Success(summary);
+        // The bar is done with; put it away on its own after five seconds.
+        _uploadHideTimer.Start();
         if (ok > 0)
         {
             // The device rescans after receiving files; wait until they show up in
             // its library so the list here is fresh without a manual refresh.
-            var sent = files.Select(f => f.Name).ToList();
+            var sent = batch.Select(f => f.Name).ToList();
             for (int attempt = 0; attempt < 14; attempt++)
             {
                 await System.Threading.Tasks.Task.Delay(900);

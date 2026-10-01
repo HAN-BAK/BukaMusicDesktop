@@ -249,15 +249,21 @@ public sealed class BukaClient : IDisposable
         return set;
     }
 
-    /// <summary>Uploads one file; reports progress through the callback.</summary>
-    public async Task<bool> UploadAsync(string filePath, IProgress<double>? progress = null,
-                                        CancellationToken token = default)
+    /// <summary>
+    /// Uploads one file and reports progress through the callback. The result
+    /// carries the device's own message, exactly like the web upload page shows
+    /// it - that is where "同名覆盖 / 剩余空间不足 80MB" is decided, and the
+    /// console has to display the same wording instead of a bare failure.
+    /// </summary>
+    public async Task<UploadOutcome> UploadAsync(string filePath, IProgress<double>? progress = null,
+                                                 CancellationToken token = default)
     {
+        string name = Path.GetFileName(filePath);
         try
         {
-            using var content = new StreamContent(File.OpenRead(filePath));
+            var stream = new ProgressStream(File.OpenRead(filePath), progress);
+            using var content = new StreamContent(stream);
             content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            var name = Path.GetFileName(filePath);
             HttpRequestMessage request = new(HttpMethod.Post, $"{BaseUrl}/upload")
             {
                 Content = content,
@@ -267,17 +273,70 @@ public sealed class BukaClient : IDisposable
             using var response = await Http.SendAsync(request, token).ConfigureAwait(false);
             var text = await response.Content.ReadAsStringAsync(token).ConfigureAwait(false);
             progress?.Report(1.0);
-            var ok = text.StartsWith("OK", StringComparison.OrdinalIgnoreCase);
+            // The endpoint answers with "OK:<message>" or "ERR:<message>"; the
+            // web page strips the same two prefixes before showing a toast.
+            var trimmed = text.Trim();
+            bool ok = trimmed.StartsWith("OK", StringComparison.OrdinalIgnoreCase);
+            string message = trimmed.Length > 3
+                    ? trimmed[3..].TrimStart(':', ' ')
+                    : trimmed;
             if (!ok)
             {
-                LogBus.Warn($"上传 {name} 失败：{text.Trim()}");
+                LogBus.Warn($"上传 {name} 失败：{message}");
             }
-            return ok;
+            return new UploadOutcome(ok, message);
         }
         catch (Exception ex)
         {
-            LogBus.Error($"上传 {Path.GetFileName(filePath)} 失败：{ex.Message}");
-            return false;
+            LogBus.Error($"上传 {name} 失败：{ex.Message}");
+            return new UploadOutcome(false, ex.Message);
+        }
+    }
+
+    /// <summary>Forwards the bytes sent so the console's bar can move.</summary>
+    private sealed class ProgressStream : Stream
+    {
+        private readonly Stream _inner;
+        private readonly IProgress<double>? _progress;
+        private readonly long _length;
+        private long _sent;
+
+        public ProgressStream(Stream inner, IProgress<double>? progress)
+        {
+            _inner = inner;
+            _progress = progress;
+            _length = inner.CanSeek ? inner.Length : 0L;
+        }
+
+        public override bool CanRead => _inner.CanRead;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => _length;
+        public override long Position
+        {
+            get => _sent;
+            set => throw new NotSupportedException();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int read = _inner.Read(buffer, offset, count);
+            if (read > 0)
+            {
+                _sent += read;
+                if (_length > 0) _progress?.Report(Math.Min(1.0, _sent / (double)_length));
+            }
+            return read;
+        }
+
+        public override void Flush() => _inner.Flush();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) _inner.Dispose();
+            base.Dispose(disposing);
         }
     }
 

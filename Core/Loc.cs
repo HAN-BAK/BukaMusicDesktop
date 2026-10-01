@@ -264,6 +264,15 @@ public sealed class Loc
             "Upload finished: {0} succeeded / {1}",
             "アップロード完了：成功 {0} / {1}",
             "업로드 완료: 성공 {0} / {1}");
+        // Same wording as the web upload page, so both routes read alike.
+        Add("{0}：已在列表中",
+            "{0}: already in the list",
+            "{0}：すでにリストにあります",
+            "{0}: 이미 목록에 있습니다");
+        Add("全部完成：成功 {0}，失败 {1}",
+            "All done: {0} succeeded, {1} failed",
+            "すべて完了：成功 {0}、失敗 {1}",
+            "모두 완료: 성공 {0}, 실패 {1}");
 
         // -------------------------------------------------------------- 歌词页
         Add("重新读取", "Reload", "再読み込み", "다시 불러오기");

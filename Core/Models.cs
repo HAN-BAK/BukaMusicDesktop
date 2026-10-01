@@ -488,3 +488,16 @@ public sealed class MultiRoomSnapshot
         ? Loc.Current.Text("同步中（{0} 台）", Targets.Count)
         : Loc.Current.Text("未开启多房间同步");
 }
+
+/// <summary>Result of one upload: the device's own message, prefix stripped.</summary>
+public sealed class UploadOutcome
+{
+    public UploadOutcome(bool ok, string message)
+    {
+        Ok = ok;
+        Message = message;
+    }
+
+    public bool Ok { get; }
+    public string Message { get; }
+}
