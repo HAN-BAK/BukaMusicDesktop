@@ -214,7 +214,6 @@ public sealed partial class ControlPage : Page
             || !string.Equals(AlbumText.Text, state.Album, StringComparison.Ordinal)
             || !string.Equals(SourceText.Text, state.SourceText, StringComparison.Ordinal)
             || CoverKey(state) != _coverKey;
-        LogBus.Info($"[check] 播放信息自检：一致={!stale}（{state.Title} / 封面 {(CoverKey(state) == _coverKey ? "已同步" : "待更新")}）");
         if (!stale) return;
         LogBus.Warn("播放信息与设备不一致，已重新同步");
         ApplyState(session);
