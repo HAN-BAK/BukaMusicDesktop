@@ -238,7 +238,9 @@ public sealed partial class ControlPage : Page
         var bytes = await session.Client.GetCoverAsync();
         if (bytes == null || bytes.Length == 0)
         {
-            DispatcherQueue.TryEnqueue(() => CoverImage.Source = null);
+            // No cover in the tags: show the dedicated placeholder, like the
+            // Android playback screen does.
+            DispatcherQueue.TryEnqueue(() => CoverImage.Source = PlaceholderCover.Image);
             return;
         }
         DispatcherQueue.TryEnqueue(() =>

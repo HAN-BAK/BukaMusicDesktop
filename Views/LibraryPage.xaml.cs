@@ -264,6 +264,9 @@ public sealed partial class LibraryPage : Page
             {
                 CoverCache.Shared.MarkMissing(tile.CoverPath);
                 LogBus.Warn($"专辑封面下载失败：{tile.Title}（{tile.CoverPath}）");
+                // No embedded art anywhere in that album: fall back to the
+                // dedicated placeholder instead of an empty tile.
+                tile.Cover = PlaceholderCover.Image;
                 return;
             }
             BitmapImage? image = await CoverCache.DecodeAsync(bytes);
@@ -271,6 +274,7 @@ public sealed partial class LibraryPage : Page
             {
                 CoverCache.Shared.MarkMissing(tile.CoverPath);
                 LogBus.Warn($"专辑封面解码失败：{tile.Title}（{bytes.Length} 字节）");
+                tile.Cover = PlaceholderCover.Image;
                 return;
             }
             CoverCache.Shared.Put(tile.CoverPath, image);
@@ -278,8 +282,9 @@ public sealed partial class LibraryPage : Page
         }
         catch (Exception)
         {
-            // A missing cover just leaves the placeholder.
+            // A missing cover falls back to the dedicated placeholder.
             LogBus.Warn($"专辑封面不可用：{tile.Title}");
+            tile.Cover = PlaceholderCover.Image;
         }
     }
 

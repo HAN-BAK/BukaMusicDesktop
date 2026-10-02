@@ -21,8 +21,6 @@
                             Background="#FF1A1C21" BorderBrush="{StaticResource StrokeBrush}"
                             BorderThickness="1">
                         <Grid>
-                            <FontIcon Glyph="&#xE8D6;" FontSize="42"
-                                      Foreground="{StaticResource TextSecondaryBrush}" />
                             <Image x:Name="CoverImage" Stretch="UniformToFill" />
                         </Grid>
                     </Border>

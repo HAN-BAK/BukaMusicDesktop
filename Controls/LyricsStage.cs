@@ -170,7 +170,20 @@ public sealed class LyricsStage : Grid
         if (bytes == null || bytes.Length == 0)
         {
             _coverApplied = true;
-            _stage.SetBackgroundArt(null);
+            // Songs without a cover use the dedicated placeholder as the PV
+            // backdrop (blurred by the print stack, exactly like real art).
+            try
+            {
+                CanvasBitmap placeholder = await CanvasBitmap.LoadAsync(
+                        device, new Uri("ms-appx:///Assets/cover_placeholder.png"));
+                _stage.SetBackgroundArt(placeholder);
+                _canvas.Invalidate();
+            }
+            catch (Exception ex)
+            {
+                _stage.SetBackgroundArt(null);
+                LogBus.Warn("占位封面加载失败：" + ex.Message);
+            }
             return;
         }
         try
