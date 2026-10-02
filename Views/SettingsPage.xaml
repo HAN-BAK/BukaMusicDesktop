@@ -145,7 +145,7 @@
                     <ItemsControl x:Name="EqList">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
+                                <controls:UniformRowPanel />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
@@ -154,10 +154,15 @@
                                 <!-- 滑条与数值放进同一个固定宽度的居中盒子：竖直滑条的
                                      轨道在控件内部居中，数值也按同一宽度居中，两者才会
                                      正对；之前数值是按整列居中，和轨道对不齐。 -->
-                                <StackPanel Width="86" Spacing="2" Margin="0,0,6,0">
+                                <StackPanel Spacing="2" HorizontalAlignment="Center">
                                     <TextBlock Text="{x:Bind Frequency}" HorizontalAlignment="Center"
                                                Style="{StaticResource LabelTextStyle}" />
+                                    <!-- Margin 8 是把滑条整体右移 4 DIP：WinUI 竖直滑条的
+                                         轨道画在控件中心左侧 4 DIP（用 RenderTargetBitmap
+                                         量过：轨道中心 31px、标签中心 39px @2x），补上这段
+                                         偏移后轨道正好落在上下两个标签的正中。 -->
                                     <Slider Orientation="Vertical" Height="150" Width="40"
+                                            Margin="8,0,0,0"
                                             HorizontalAlignment="Center"
                                             Minimum="-12" Maximum="12"
                                             StepFrequency="0.1" Value="{x:Bind Gain, Mode=TwoWay}" />
@@ -165,7 +170,7 @@
                                                Width="40" TextAlignment="Center"
                                                HorizontalAlignment="Center"
                                                FontFamily="Consolas" FontSize="12"
-                                               Foreground="{StaticResource AccentBrush}" />
+                                               Foreground="{StaticResource TextSecondaryBrush}" />
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

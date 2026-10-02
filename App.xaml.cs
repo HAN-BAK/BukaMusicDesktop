@@ -50,6 +50,19 @@ public partial class App : Application
                 _ = RunUploadTestAsync(argv[i + 1], argv[i + 2]);
                 return;
             }
+            if (argv[i] == "--shot")
+            {
+                // --shot <page> <host> <out.png> [elementName]
+                string page = argv[i + 1];
+                string host = i + 2 < argv.Length ? argv[i + 2] : "192.168.0.122";
+                string outPath = i + 3 < argv.Length ? argv[i + 3] : "shot.png";
+                string? element = i + 4 < argv.Length ? argv[i + 4] : null;
+                _startupTag = page;
+                _startupHost = host;
+                _shotPath = outPath;
+                _shotElement = element;
+                break;
+            }
         }
         // Debug shortcut: open the console on one device's lyric page directly.
         for (int i = 0; i < argv.Length - 1; i++)
@@ -87,7 +100,57 @@ public partial class App : Application
                 Ip = _startupHost,
                 Port = 8080,
             }));
+            if (_shotPath != null)
+            {
+                _ = CaptureAfterDelayAsync(window, _shotPath, _shotElement);
+            }
         }
+    }
+
+    private static string? _shotPath;
+    private static string? _shotElement;
+
+    /// <summary>Waits for the page to load its data, then renders it to a PNG.</summary>
+    private static async System.Threading.Tasks.Task CaptureAfterDelayAsync(
+            MainWindow window, string path, string? elementName)
+    {
+        await System.Threading.Tasks.Task.Delay(4500);
+        try
+        {
+            UIElement? target = null;
+            if (!string.IsNullOrEmpty(elementName))
+            {
+                target = FindByName(window.Content as DependencyObject, elementName);
+            }
+            target ??= (UIElement?)window.Content;
+            if (target is FrameworkElement element)
+            {
+                // Bring it on screen first: content below the fold is clipped.
+                element.StartBringIntoView();
+                await System.Threading.Tasks.Task.Delay(700);
+            }
+            if (target != null) await Core.ShotProbe.SaveAsync(target, path);
+        }
+        catch (Exception ex)
+        {
+            try { File.WriteAllText(path + ".error.txt", ex.ToString()); } catch { }
+        }
+        Current.Exit();
+    }
+
+    /// <summary>Depth-first search for a named element anywhere in the tree.</summary>
+    private static UIElement? FindByName(DependencyObject? node, string name)
+    {
+        if (node == null) return null;
+        int count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(node);
+        for (int i = 0; i < count; i++)
+        {
+            DependencyObject child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(node, i);
+            if (child is FrameworkElement element && element.Name == name) return element;
+            UIElement? found = FindByName(child, name);
+            if (found != null) return found;
+        }
+        return null;
     }
 
     private static string? _startupHost;

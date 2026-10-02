@@ -100,6 +100,7 @@ BukaMusicDesktop.exe --lang en                     # 指定界面语言：zh / e
 BukaMusicDesktop.exe --page library 192.168.0.10   # 直接打开某台设备的指定页面
 BukaMusicDesktop.exe --navtest settings 192.168.0.10   # 打开设备后自动点一次侧栏
 BukaMusicDesktop.exe --upload-test 192.168.0.10 "D:\song.mp3"   # 只跑一次上传，结果写到 %TEMP%\buka_upload_test.txt
+BukaMusicDesktop.exe --shot settings 192.168.0.10 out.png EqList   # 把某个页面/控件渲染成 PNG（排查布局用）
 ```
 
 ## 通信方式
