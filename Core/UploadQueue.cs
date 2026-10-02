@@ -203,7 +203,10 @@ public sealed class UploadQueue
             string summary = Loc.Current.Text("全部完成：成功 {0}，失败 {1}", _ok, _failed);
             // The web page pops one toast per failure; the console has a single
             // status line, so the reason of the last failure goes with the count.
-            if (_reasons.Count > 0) summary += " · " + _reasons[^1];
+            // The reason is the device's own wording (it answers in the phone's
+            // language) - translate the known replies so the line stays in the
+            // console's language.
+            if (_reasons.Count > 0) summary += " · " + Loc.Current.DeviceMessage(_reasons[^1]);
             lock (_gate)
             {
                 _summary = summary;

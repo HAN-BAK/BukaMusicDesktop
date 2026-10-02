@@ -21,6 +21,10 @@ public enum UiLanguage { Zh, En, Ja, Ko }
 public sealed class Loc
 {
     private readonly Dictionary<string, string[]> _table = new(StringComparer.Ordinal);
+    /// <summary>Device replies, keyed by every known source spelling.</summary>
+    private readonly Dictionary<string, string[]> _deviceMessages = new(StringComparer.Ordinal);
+    /// <summary>Device replies that continue with a value (supported extensions…).</summary>
+    private readonly List<(string[] Sources, string[] Targets)> _devicePrefixes = new();
 
     public static Loc Current { get; } = new();
 
@@ -99,6 +103,50 @@ public sealed class Loc
 
     private void Add(string zh, string en, string ja, string ko)
         => _table[zh] = new[] { zh, en, ja, ko };
+
+    /// <summary>
+    /// Registers a reply of the Android device: the same text exists in four
+    /// spellings (the phone answers in its own UI language) and each spelling
+    /// maps to the four translations.
+    /// </summary>
+    private void AddDevice(string zh, string en, string ja, string ko)
+    {
+        string[] values = { zh, en, ja, ko };
+        foreach (string spelling in values)
+        {
+            if (!string.IsNullOrEmpty(spelling)) _deviceMessages[spelling] = values;
+        }
+    }
+
+    /// <summary>Same, for replies the device continues with a value.</summary>
+    private void AddDevicePrefix(string zh, string en, string ja, string ko)
+        => _devicePrefixes.Add((new[] { zh, en, ja, ko }, new[] { zh, en, ja, ko }));
+
+    /// <summary>
+    /// Translates text a device answered with. The console and the phone can run
+    /// in different languages, so known replies are mapped here; anything else
+    /// (file names, IPs, errors of the runtime) passes through untouched.
+    /// </summary>
+    public string DeviceMessage(string? value)
+    {
+        string text = (value ?? "").Trim();
+        if (text.Length == 0) return text;
+        if (_deviceMessages.TryGetValue(text, out string[]? values))
+        {
+            return values[(int)Language];
+        }
+        foreach ((string[] sources, string[] targets) in _devicePrefixes)
+        {
+            for (int i = 0; i < sources.Length; i++)
+            {
+                if (text.StartsWith(sources[i], StringComparison.OrdinalIgnoreCase))
+                {
+                    return targets[(int)Language] + text[sources[i].Length..];
+                }
+            }
+        }
+        return text;
+    }
 
     public Loc()
     {
@@ -281,6 +329,21 @@ public sealed class Loc
             "{0}… {1} files waiting to upload",
             "{0}… 合計 {1} 件がアップロード待ち",
             "{0}… 총 {1}개 파일 업로드 대기 중");
+        // 设备端 /upload 的返回文案：手机是用它自己的界面语言回答的，电脑可能
+        // 跑在另一种语言上，所以这几种已知回复要在这里翻译一遍。
+        AddDevice("文件名或内容为空", "File name or content is empty",
+            "ファイル名または内容が空です", "파일 이름 또는 내용이 비어 있습니다");
+        AddDevice("不支持的文件格式", "Unsupported file format",
+            "未対応のファイル形式", "지원하지 않는 파일 형식");
+        AddDevice("无法创建音乐目录", "Cannot create the music folder",
+            "音楽フォルダを作成できません", "음악 폴더를 만들 수 없습니다");
+        AddDevice("上传后剩余空间将不足80MB，已取消上传",
+            "Uploading this file would leave less than 80 MB free; upload cancelled.",
+            "このファイルをアップロードすると空き容量が80MB未満になるため、アップロードをキャンセルしました",
+            "이 파일을 업로드하면 남은 공간이 80MB 미만이 되어 업로드가 취소되었습니다");
+        // 这条设备会在后面拼上支持的扩展名，所以按前缀匹配。
+        AddDevicePrefix("仅支持音乐文件：", "Music files only: ",
+            "音楽ファイルのみ：", "음악 파일만 지원: ");
 
         // -------------------------------------------------------------- 歌词页
         Add("重新读取", "Reload", "再読み込み", "다시 불러오기");
