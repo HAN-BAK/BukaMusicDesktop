@@ -335,10 +335,12 @@ public sealed class Loc
             "기기에서의 절대 경로를 입력하세요(예: /storage/emulated/0/Music 또는 USB 드라이브 마운트 경로). 변경하면 기기가 자동으로 다시 검색합니다.");
         Add("播放", "Playback", "再生", "재생");
         Add("播放方式", "Play mode", "再生モード", "재생 방식");
+        // 播放方式：顺序播放播完停止，列表循环回到开头，随机循环打乱后连续播放，
+        // 单曲循环反复当前这首。（"列表"就是当前播放范围：整个曲库或一张专辑。）
         Add("顺序播放", "Sequential Play", "順次再生", "순차 재생");
-        Add("顺序循环播放", "Folder Loop", "フォルダループ", "폴더 반복");
-        Add("随机循环播放", "Shuffle Loop", "シャッフルループ", "셔플 반복");
-        Add("单曲循环", "Repeat One", "リピート1曲", "한 곡 반복");
+        Add("列表循环", "List Loop", "リストループ", "목록 반복");
+        Add("随机循环", "Shuffle Loop", "シャッフルループ", "셔플 반복");
+        Add("单曲循环", "Repeat One", "1曲リピート", "한 곡 반복");
         Add("启动应用时自动播放本地音乐",
             "Play local music automatically on start",
             "起動時にローカル音楽を自動再生",

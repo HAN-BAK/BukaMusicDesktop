@@ -50,8 +50,8 @@
                                    Style="{StaticResource LabelTextStyle}" />
                         <ComboBox x:Name="ModeCombo" Grid.Column="1" Width="190" Height="36">
                             <ComboBoxItem Content="顺序播放" Tag="SEQUENCE" />
-                            <ComboBoxItem Content="顺序循环播放" Tag="FOLDER_LOOP" />
-                            <ComboBoxItem Content="随机循环播放" Tag="SHUFFLE" />
+                            <ComboBoxItem Content="列表循环" Tag="FOLDER_LOOP" />
+                            <ComboBoxItem Content="随机循环" Tag="SHUFFLE" />
                             <ComboBoxItem Content="单曲循环" Tag="REPEAT_ONE" />
                         </ComboBox>
                     </Grid>
