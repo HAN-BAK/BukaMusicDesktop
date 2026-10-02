@@ -405,6 +405,18 @@ public sealed partial class LibraryPage : Page
     {
         var session = _session;
         if (session == null) return;
+        // The device's own library follows this console: playing from the album
+        // (or artist) view switches the device to the same grouping, so both
+        // screens show the same thing.
+        await session.Client.ApplySettingsAsync(new
+        {
+            libraryGroup = _groupBy switch
+            {
+                "album" => "ALBUM",
+                "artist" => "ARTIST",
+                _ => "NONE",
+            },
+        });
         var payload = new Dictionary<string, object> { ["path"] = track.Path };
         if (_openGroup != null && _items.Count > 0)
         {
