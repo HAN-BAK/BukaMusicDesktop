@@ -151,12 +151,18 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="core:EqBand"
                                           xmlns:core="using:BukaMusicDesktop.Core">
-                                <StackPanel Width="86" Spacing="4" Margin="0,0,6,0">
+                                <!-- 滑条与数值放进同一个固定宽度的居中盒子：竖直滑条的
+                                     轨道在控件内部居中，数值也按同一宽度居中，两者才会
+                                     正对；之前数值是按整列居中，和轨道对不齐。 -->
+                                <StackPanel Width="86" Spacing="2" Margin="0,0,6,0">
                                     <TextBlock Text="{x:Bind Frequency}" HorizontalAlignment="Center"
                                                Style="{StaticResource LabelTextStyle}" />
-                                    <Slider Orientation="Vertical" Height="150" Minimum="-12" Maximum="12"
+                                    <Slider Orientation="Vertical" Height="150" Width="40"
+                                            HorizontalAlignment="Center"
+                                            Minimum="-12" Maximum="12"
                                             StepFrequency="0.1" Value="{x:Bind Gain, Mode=TwoWay}" />
                                     <TextBlock Text="{x:Bind GainText, Mode=OneWay}"
+                                               Width="40" TextAlignment="Center"
                                                HorizontalAlignment="Center"
                                                FontFamily="Consolas" FontSize="12"
                                                Foreground="{StaticResource AccentBrush}" />
