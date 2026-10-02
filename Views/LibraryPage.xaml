@@ -58,7 +58,7 @@
                 <controls:MarqueeText x:Name="UploadQueueText" Text="" MaxWidth="460"
                                       Visibility="Collapsed"
                                       FontFamily="{StaticResource UiFont}" FontSize="12"
-                                      Foreground="{StaticResource AccentBrush}" />
+                                      Foreground="{StaticResource TextSecondaryBrush}" />
                 <ProgressBar x:Name="UploadProgress" Minimum="0" Maximum="100"
                              Visibility="Collapsed" Height="4" />
             </StackPanel>
