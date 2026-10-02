@@ -81,6 +81,16 @@ public sealed class UploadQueue
     }
 
     /// <summary>
+    /// Line shown under the running status: the waiting files and the transient
+    /// notices. It gets its own line because the status line is a clipped,
+    /// scrolling marquee - text appended to it is simply not visible.
+    /// </summary>
+    public string SecondaryStatus
+    {
+        get { lock (_gate) return SecondaryLocked(); }
+    }
+
+    /// <summary>
     /// Adds one pick to the queue. Duplicates of files that are still waiting
     /// are skipped with the same wording the web page uses.
     /// </summary>
@@ -235,15 +245,14 @@ public sealed class UploadQueue
     }
 
     private string ComposeLocked()
-    {
-        string text = _running
+        => _running
                 ? Loc.Current.Text("正在上传 ({0}/{1})：{2}",
                         Math.Min(_index + 1, Math.Max(1, _total)), _total, _current)
                 : _summary;
-        if (_notice.Length > 0)
-        {
-            text = text.Length == 0 ? _notice : text + " · " + _notice;
-        }
+
+    private string SecondaryLocked()
+    {
+        string text = _notice;
         string waiting = WaitingLocked();
         if (waiting.Length > 0)
         {

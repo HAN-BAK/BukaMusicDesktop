@@ -90,6 +90,11 @@ public sealed partial class LibraryPage : Page
         UploadProgress.Visibility = UploadQueue.Instance.Visible
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+        string secondary = UploadQueue.Instance.SecondaryStatus;
+        UploadQueueText.Text = secondary;
+        UploadQueueText.Visibility = secondary.Length > 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
     }
 
     /// <summary>Keeps the "playing now" marker in sync with the device.</summary>

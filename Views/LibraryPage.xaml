@@ -54,6 +54,11 @@
                 <controls:MarqueeText x:Name="UploadStatus" Text="" MaxWidth="460"
                                       FontFamily="{StaticResource UiFont}" FontSize="12"
                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                <!-- 排队与提示单独一行：状态行是限宽滚动的，追加在它尾部会看不见 -->
+                <controls:MarqueeText x:Name="UploadQueueText" Text="" MaxWidth="460"
+                                      Visibility="Collapsed"
+                                      FontFamily="{StaticResource UiFont}" FontSize="12"
+                                      Foreground="{StaticResource AccentBrush}" />
                 <ProgressBar x:Name="UploadProgress" Minimum="0" Maximum="100"
                              Visibility="Collapsed" Height="4" />
             </StackPanel>
