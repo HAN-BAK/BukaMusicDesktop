@@ -99,6 +99,7 @@ public sealed class BukaClient : IDisposable
                 Title = Str(track, "title"),
                 Artist = Str(track, "artist"),
                 Album = Str(track, "album"),
+                TrackNo = Int(track, "track"),
                 DurationMs = Long(track, "durationMs"),
                 SizeBytes = Long(track, "sizeBytes"),
             });

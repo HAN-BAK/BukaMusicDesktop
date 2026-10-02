@@ -26,8 +26,6 @@ public sealed partial class LibraryPage : Page
     private readonly ObservableCollection<TrackItem> _items = new();
     private readonly List<TrackItem> _all = new();
     private readonly ObservableCollection<GroupTile> _tiles = new();
-    /// <summary>Hides the upload bar five seconds after a batch finishes.</summary>
-    private readonly DispatcherTimer _uploadHideTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private Session? _session;
     private string _groupBy = "none";
     /// <summary>True while the「管理」mode shows tick boxes and counts them.</summary>
@@ -41,14 +39,6 @@ public sealed partial class LibraryPage : Page
         InitializeComponent();
         TrackList.ItemsSource = _items;
         GroupGrid.ItemsSource = _tiles;
-        _uploadHideTimer.Tick += (_, _) =>
-        {
-            _uploadHideTimer.Stop();
-            UploadProgress.Visibility = Visibility.Collapsed;
-            UploadProgress.Value = 0;
-            // The line that goes with the bar leaves with it.
-            UploadStatus.Text = "";
-        };
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -56,6 +46,11 @@ public sealed partial class LibraryPage : Page
         base.OnNavigatedTo(e);
         _session = e.Parameter as Session;
         if (_session != null) _session.StateUpdated += OnStateUpdated;
+        // Uploads run in the shared queue, not in this page: coming back to the
+        // page picks the current state up again instead of showing nothing.
+        UploadQueue.Instance.Changed += OnUploadChanged;
+        UploadQueue.Instance.Drained += OnUploadDrained;
+        ApplyUploadState();
         // Remember how the library was presented last time; the environment
         // variable stays as a debug override.
         string preset = Environment.GetEnvironmentVariable("BUKA_LIBRARY_GROUP")
@@ -78,6 +73,23 @@ public sealed partial class LibraryPage : Page
     {
         base.OnNavigatedFrom(e);
         if (_session != null) _session.StateUpdated -= OnStateUpdated;
+        UploadQueue.Instance.Changed -= OnUploadChanged;
+        UploadQueue.Instance.Drained -= OnUploadDrained;
+    }
+
+    private void OnUploadChanged() => DispatcherQueue.TryEnqueue(ApplyUploadState);
+
+    /// <summary>The queue drained: pull the device's library in again.</summary>
+    private void OnUploadDrained() => DispatcherQueue.TryEnqueue(async () => await ReloadAsync());
+
+    /// <summary>Mirrors the shared upload state into this page's controls.</summary>
+    private void ApplyUploadState()
+    {
+        UploadStatus.Text = UploadQueue.Instance.Status;
+        UploadProgress.Value = UploadQueue.Instance.Progress;
+        UploadProgress.Visibility = UploadQueue.Instance.Visible
+                ? Visibility.Visible
+                : Visibility.Collapsed;
     }
 
     /// <summary>Keeps the "playing now" marker in sync with the device.</summary>
@@ -149,7 +161,9 @@ public sealed partial class LibraryPage : Page
                     Title = key,
                     Subtitle = DescribeTile(bucket),
                     CoverPath = bucket[0].Path,
-                    Tracks = bucket,
+                    Tracks = _groupBy == "album"
+                            ? InTrackOrder(bucket).ToList()
+                            : bucket,
                 };
                 _tiles.Add(tile);
                 _ = LoadTileCoverAsync(tile);
@@ -168,6 +182,9 @@ public sealed partial class LibraryPage : Page
             if (browsing && _openGroup != null)
             {
                 source = filtered.Where(item => GroupKey(item) == _openGroup);
+                // Album view only: a disc's songs belong in track order. The
+                // artist view and the flat list keep the order they had.
+                if (_groupBy == "album") source = InTrackOrder(source);
             }
             _items.Clear();
             foreach (TrackItem item in source) _items.Add(item);
@@ -206,6 +223,14 @@ public sealed partial class LibraryPage : Page
         string key = _groupBy == "album" ? item.Album : item.Artist;
         return string.IsNullOrWhiteSpace(key) ? Loc.Current.Text("未知") : key.Trim();
     }
+
+    /// <summary>
+    /// Order of one album's songs: by the file's track number when it has one.
+    /// Songs without a number fall to the end, ordered by title.
+    /// </summary>
+    private static IEnumerable<TrackItem> InTrackOrder(IEnumerable<TrackItem> tracks)
+        => tracks.OrderBy(t => t.TrackNo > 0 ? t.TrackNo : int.MaxValue)
+                 .ThenBy(t => t.Display, StringComparer.CurrentCultureIgnoreCase);
 
     private string DescribeTile(List<TrackItem> bucket)
     {
@@ -517,11 +542,7 @@ public sealed partial class LibraryPage : Page
         var files = await picker.PickMultipleFilesAsync();
         if (files == null || files.Count == 0) return;
 
-        // Same rule as the web page's file list: one batch never uploads the
-        // same file (name + size) twice, and the skipped one is reported with
-        // the same wording.
-        var batch = new List<StorageFile>();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var items = new List<UploadItem>();
         foreach (StorageFile file in files)
         {
             long size = 0;
@@ -534,84 +555,11 @@ public sealed partial class LibraryPage : Page
             {
                 // Size is only used to spot duplicates; a failure is not fatal.
             }
-            if (!seen.Add($"{file.Name}|{size}"))
-            {
-                string dup = Loc.Current.Text("{0}：已在列表中", file.Name);
-                UploadStatus.Text = dup;
-                LogBus.Warn(dup);
-                // Skip messages fade away on the same five-second timer.
-                _uploadHideTimer.Stop();
-                _uploadHideTimer.Start();
-                continue;
-            }
-            batch.Add(file);
-        }
-        if (batch.Count == 0)
-        {
-            return;
+            items.Add(new UploadItem { Path = file.Path, Name = file.Name, Size = size });
         }
 
-        UploadProgress.Visibility = Visibility.Visible;
-        UploadProgress.Value = 0;
-        _uploadHideTimer.Stop();
-        int done = 0;
-        int ok = 0;
-        bool batchDone = false;
-        var reasons = new List<string>();
-        foreach (StorageFile file in batch)
-        {
-            UploadStatus.Text = Loc.Current.Text("正在上传 ({0}/{1})：{2}",
-                done + 1, batch.Count, file.Name);
-            // The bar covers the whole batch; each file reports its own bytes.
-            double fileShare = 100d / batch.Count;
-            var progress = new Progress<double>(fraction =>
-            {
-                // Progress<T> posts to the UI thread, so a late callback can
-                // arrive after the batch finished; that must not move the bar.
-                if (batchDone) return;
-                UploadProgress.Value = Math.Min(100d, done * fileShare + fraction * fileShare);
-            });
-            UploadOutcome outcome = await session.Client.UploadAsync(file.Path, progress);
-            if (outcome.Ok)
-            {
-                ok++;
-            }
-            else if (!string.IsNullOrWhiteSpace(outcome.Message))
-            {
-                reasons.Add(outcome.Message);
-            }
-            done++;
-        }
-        batchDone = true;
-        UploadProgress.Value = 100;
-        string summary = Loc.Current.Text("全部完成：成功 {0}，失败 {1}", ok, done - ok);
-        // The web page pops one toast per failure; the console has a single
-        // status line, so the reason of the last failure goes with the count.
-        if (reasons.Count > 0)
-        {
-            summary += " · " + reasons[^1];
-        }
-        UploadStatus.Text = summary;
-        LogBus.Success(summary);
-        // The bar is done with; put it away on its own after five seconds.
-        _uploadHideTimer.Start();
-        if (ok > 0)
-        {
-            // The device rescans after receiving files; wait until they show up in
-            // its library so the list here is fresh without a manual refresh.
-            var sent = batch.Select(f => f.Name).ToList();
-            for (int attempt = 0; attempt < 14; attempt++)
-            {
-                await System.Threading.Tasks.Task.Delay(900);
-                var tracks = await session.Client.GetLibraryAsync();
-                if (tracks.Any(t => sent.Any(name =>
-                        string.Equals(name, t.Name, StringComparison.OrdinalIgnoreCase))))
-                {
-                    LogBus.Info("设备已完成曲库刷新");
-                    break;
-                }
-            }
-        }
-        await ReloadAsync();
+        // Picking while a batch is running only lines the files up: the shared
+        // queue runs them one batch after another.
+        UploadQueue.Instance.Enqueue(session.Client, items);
     }
 }

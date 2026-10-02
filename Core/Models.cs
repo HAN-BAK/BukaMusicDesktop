@@ -173,6 +173,8 @@ public sealed class TrackItem : INotifyPropertyChanged
     public string Title { get => Loc.Current.Text(_title); init => _title = value; }
     public string Artist { get => Loc.Current.Tag(_artist, "未知歌手"); init => _artist = value; }
     public string Album { get => Loc.Current.Tag(_album, "未知专辑"); init => _album = value; }
+    /// <summary>音轨号；0 表示文件里没有这个标签。</summary>
+    public int TrackNo { get; init; }
     public long DurationMs { get; init; }
     public long SizeBytes { get; init; }
 
