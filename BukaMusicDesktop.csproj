@@ -18,7 +18,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <AssemblyName>BukaMusicDesktop</AssemblyName>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <DefaultLanguage>zh-CN</DefaultLanguage>
   </PropertyGroup>

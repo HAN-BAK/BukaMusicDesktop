@@ -20,8 +20,8 @@ internal static class Installer
     private const string Host = "s3.bitiful.net";
     private const string Bucket = "bukamusic";
     private const string Region = "cn-east-1";
-    private const string AccessKey = "Y0kOrrw8wOAo2OfyWbSrbKlp";
-    private const string SecretKey = "88oHn5aqdHcwkE0w0nmrK1Wipj8DxA5";
+    private const string AccessKey = "fXjRFy17EQZTzGdSV1trjrjZ";
+    private const string SecretKey = "2Z7hEapt9IdcZlgLTe2th1SZJpr09Sy";
     private const string AppExe = "BukaMusicDesktop.exe";
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\BukaMusicDesktop";
 

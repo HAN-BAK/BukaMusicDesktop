@@ -24,3 +24,8 @@ build/
 # 本地密钥/凭据
 Key.txt
 
+
+# 临时接口响应
+/a.json
+/d.json
+
