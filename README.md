@@ -4,6 +4,8 @@
 
 <p align="center">Windows 桌面控制台：自动发现局域网内的 BukaMusic 安卓设备，控制播放、曲库、多房间与歌词</p>
 
+<p align="center">配套安卓端：<a href="https://github.com/HAN-BAK/BukaMusic">HAN-BAK/BukaMusic</a></p>
+
 <p align="center">下载：<a href="https://github.com/HAN-BAK/BukaMusicDesktop/releases">Releases</a>（Windows 10 1809+ / 64 位）</p>
 
 ## 功能
