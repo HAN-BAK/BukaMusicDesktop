@@ -1,21 +1,20 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Windows;
 
 namespace BukaMusicSetup;
 
 /// <summary>
-/// BukaMusic 控制台引导安装程序：从缤纷云下载程序包并解压到目标目录，
-/// 建快捷方式、写卸载信息。支持：
-///   BukaMusicSetup.exe                    交互安装
-///   BukaMusicSetup.exe --silent --dir X   静默覆盖安装（应用内更新用）
-///   BukaMusicSetup.exe --uninstall        卸载
+/// 安装逻辑：从缤纷云下载程序包 → 解压到目标目录 → 建快捷方式 → 写卸载信息。
+/// 界面在 <see cref="MainWindow"/>，命令行参数在 <see cref="App"/>。
 /// </summary>
-internal static class Program
+internal static class Installer
 {
     private const string Endpoint = "https://s3.bitiful.net";
     private const string Host = "s3.bitiful.net";
@@ -28,50 +27,13 @@ internal static class Program
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(30) };
 
-    [STAThread]
-    private static void Main(string[] args)
-    {
-        ApplicationConfiguration.Initialize();
-        string? dir = ValueOf(args, "--dir");
-        if (args.Contains("--uninstall"))
-        {
-            Uninstall(dir);
-            return;
-        }
-        if (args.Contains("--silent"))
-        {
-            try
-            {
-                InstallAsync(dir ?? DefaultDir(), null, CancellationToken.None).GetAwaiter().GetResult();
-                Environment.Exit(0);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("更新安装失败：\n" + ex.Message, "BukaMusic",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Environment.Exit(1);
-            }
-            return;
-        }
-        Application.Run(new SetupForm(dir ?? DefaultDir()));
-    }
-
     public static string DefaultDir() => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "BukaMusicDesktop");
 
-    private static string? ValueOf(string[] args, string name)
-    {
-        for (int i = 0; i < args.Length - 1; i++)
-        {
-            if (args[i] == name) return args[i + 1];
-        }
-        return null;
-    }
-
-    /// <summary>下载并覆盖安装到 dir。progress 报告 0-100。</summary>
-    public static async Task<string> InstallAsync(string dir, IProgress<(int Percent, string Text)>? progress,
-                                                  CancellationToken token)
+    /// <summary>把最新版本的程序覆盖安装到 dir。</summary>
+    public static async Task<string> InstallAsync(
+        string dir, IProgress<(int Percent, string Text)>? progress, CancellationToken token)
     {
         progress?.Report((0, "正在获取版本信息…"));
         var latest = await FetchLatestAsync(token);
@@ -79,12 +41,13 @@ internal static class Program
             throw new Exception("无法获取最新版本信息，请检查网络");
 
         progress?.Report((2, $"正在下载 {latest.Value.Version}…"));
-        string tempDir = Path.Combine(Path.GetTempPath(), "BukaMusicSetup-" + Guid.NewGuid().ToString("N")[..8]);
+        string tempDir = Path.Combine(Path.GetTempPath(),
+            "BukaMusicSetup-" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(tempDir);
         string zip = Path.Combine(tempDir, "app.zip");
         await DownloadAsync(latest.Value.Key, latest.Value.Size, zip,
-            percent => progress?.Report((2 + percent * 78 / 100, $"正在下载 {latest.Value.Version}… {percent}%")),
-            token);
+            percent => progress?.Report((2 + percent * 78 / 100,
+                $"正在下载 {latest.Value.Version}… {percent}%")), token);
 
         progress?.Report((82, "正在解压…"));
         string extractDir = Path.Combine(tempDir, "app");
@@ -100,7 +63,6 @@ internal static class Program
         Directory.CreateDirectory(dir);
         CopyDirectory(source, dir);
 
-        // 把安装程序自己放进安装目录，作为卸载入口
         try
         {
             string self = Environment.ProcessPath ?? "";
@@ -114,9 +76,56 @@ internal static class Program
         progress?.Report((95, "正在创建快捷方式…"));
         CreateShortcuts(dir);
         WriteUninstallEntry(dir, latest.Value.Version);
-        try { File.Delete(zip); Directory.Delete(extractDir, true); Directory.Delete(tempDir, true); } catch { }
+        try
+        {
+            File.Delete(zip);
+            Directory.Delete(extractDir, true);
+            Directory.Delete(tempDir, true);
+        }
+        catch { }
         progress?.Report((100, "安装完成"));
         return dir;
+    }
+
+    private static async Task<(string Version, string Key, long Size)?> FetchLatestAsync(
+        CancellationToken token)
+    {
+        string json = await Http.GetStringAsync(Presign("Windows/latest.json"), token);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        string version = root.TryGetProperty("version", out var v) ? v.GetString() ?? "" : "";
+        string key = root.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
+        long size = root.TryGetProperty("size", out var s) ? s.GetInt64() : 0;
+        return (version, key, size);
+    }
+
+    private static async Task DownloadAsync(string key, long size, string path,
+                                            Action<int> progress, CancellationToken token)
+    {
+        using var response = await Http.GetAsync(Presign(key),
+            HttpCompletionOption.ResponseHeadersRead, token);
+        response.EnsureSuccessStatusCode();
+        long total = response.Content.Headers.ContentLength ?? size;
+        await using var input = await response.Content.ReadAsStreamAsync(token);
+        await using var output = File.Create(path);
+        byte[] buffer = new byte[128 * 1024];
+        long done = 0;
+        int last = -1;
+        int n;
+        while ((n = await input.ReadAsync(buffer, token)) > 0)
+        {
+            await output.WriteAsync(buffer.AsMemory(0, n), token);
+            done += n;
+            if (total > 0)
+            {
+                int percent = (int)(done * 100 / total);
+                if (percent != last)
+                {
+                    last = percent;
+                    progress(percent);
+                }
+            }
+        }
     }
 
     private static string? FindAppDir(string root)
@@ -191,7 +200,7 @@ internal static class Program
         catch { }
     }
 
-    private static void Uninstall(string? dir)
+    public static void Uninstall(string? dir)
     {
         dir ??= DefaultDir();
         if (!Directory.Exists(dir))
@@ -200,7 +209,7 @@ internal static class Program
             return;
         }
         if (MessageBox.Show("确定要卸载 BukaMusic 控制台吗？\n" + dir, "卸载 BukaMusic",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
         {
             return;
         }
@@ -218,7 +227,6 @@ internal static class Program
             if (Directory.Exists(startMenu)) Directory.Delete(startMenu, true);
         }
         catch { }
-        // 安装程序自己就在安装目录里，删不掉自己：交给一个延迟命令
         try
         {
             Process.Start(new ProcessStartInfo("cmd.exe",
@@ -233,48 +241,8 @@ internal static class Program
     }
 
     // ------------------------------------------------------------------
-    // 缤纷云（S3 SigV4 预签名 + 下载）
+    // 缤纷云（S3 SigV4 预签名）
     // ------------------------------------------------------------------
-
-    private static async Task<(string Version, string Key, long Size)?> FetchLatestAsync(CancellationToken token)
-    {
-        string json = await Http.GetStringAsync(Presign("Windows/latest.json"), token);
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-        string version = root.TryGetProperty("version", out var v) ? v.GetString() ?? "" : "";
-        string key = root.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
-        long size = root.TryGetProperty("size", out var s) ? s.GetInt64() : 0;
-        return (version, key, size);
-    }
-
-    private static async Task DownloadAsync(string key, long size, string path,
-                                            Action<int> progress, CancellationToken token)
-    {
-        using var response = await Http.GetAsync(Presign(key),
-            HttpCompletionOption.ResponseHeadersRead, token);
-        response.EnsureSuccessStatusCode();
-        long total = response.Content.Headers.ContentLength ?? size;
-        await using var input = await response.Content.ReadAsStreamAsync(token);
-        await using var output = File.Create(path);
-        byte[] buffer = new byte[128 * 1024];
-        long done = 0;
-        int last = -1;
-        int n;
-        while ((n = await input.ReadAsync(buffer, token)) > 0)
-        {
-            await output.WriteAsync(buffer.AsMemory(0, n), token);
-            done += n;
-            if (total > 0)
-            {
-                int percent = (int)(done * 100 / total);
-                if (percent != last)
-                {
-                    last = percent;
-                    progress(percent);
-                }
-            }
-        }
-    }
 
     private static string Presign(string key)
     {
