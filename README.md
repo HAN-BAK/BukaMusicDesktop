@@ -1,5 +1,7 @@
 <h1 align="center">BukaMusic Desktop</h1>
 
+<p align="center"><img src="Assets/logo.png" width="112" alt="BukaMusic"></p>
+
 <p align="center">Windows 桌面控制台：自动发现局域网内的 BukaMusic 安卓设备，控制播放、曲库、多房间与歌词</p>
 
 <p align="center">下载：<a href="https://github.com/HAN-BAK/BukaMusicDesktop/releases">Releases</a>（Windows 10 1809+ / 64 位）</p>
