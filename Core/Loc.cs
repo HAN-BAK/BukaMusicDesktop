@@ -499,6 +499,52 @@ public sealed class Loc
             "GET /api/info　device information (also the reply to UDP discovery)\nGET /api/state　playback state\nGET/POST /api/settings　read / change settings\nGET /api/library　library list\nPOST /api/control　playback control (play / pause / next / previous / seek / volume / mode / rescan)\nPOST /api/delete　delete files from the library\nGET /api/cover　current cover image\nPOST /upload　upload music (shared by the web page and this console)",
             "GET /api/info　デバイス情報（UDP 自動検出への応答も兼ねる）\nGET /api/state　再生状態\nGET/POST /api/settings　設定の読み書き\nGET /api/library　ライブラリ一覧\nPOST /api/control　再生コントロール（play / pause / next / previous / seek / volume / mode / rescan）\nPOST /api/delete　ライブラリ内のファイルを削除\nGET /api/cover　現在のカバー画像\nPOST /upload　音楽をアップロード（Web ページと共通）",
             "GET /api/info　기기 정보(UDP 자동 검색 응답 포함)\nGET /api/state　재생 상태\nGET/POST /api/settings　설정 읽기/변경\nGET /api/library　라이브러리 목록\nPOST /api/control　재생 제어(play / pause / next / previous / seek / volume / mode / rescan)\nPOST /api/delete　라이브러리 파일 삭제\nGET /api/cover　현재 커버 이미지\nPOST /upload　음악 업로드(웹 페이지와 공용)");
+
+        // ---- 网络曲库 ----
+        Add("网络曲库", "Network library", "ネットワークライブラリ", "네트워크 음악 보관함");
+        Add("支持 WebDAV、SMB（Windows 共享 / NAS）、FTP，与设备上的本地音乐合并显示；这里修改的是设备上的设置。",
+            "Supports WebDAV, SMB (Windows shares / NAS) and FTP. Network tracks are merged with the device's local music; changes here are saved on the device.",
+            "WebDAV・SMB（Windows 共有 / NAS）・FTP に対応。デバイスのローカル音楽とまとめて表示されます。ここでの変更はデバイスに保存されます。",
+            "WebDAV, SMB(Windows 공유 / NAS), FTP를 지원합니다. 기기의 로컬 음악과 함께 표시되며, 여기서 바꾼 설정은 기기에 저장됩니다.");
+        Add("添加网络路径", "Add network path", "ネットワークパスを追加", "네트워크 경로 추가");
+        Add("还没有添加网络音乐路径", "No network music paths yet", "ネットワーク音楽パスはまだありません", "아직 네트워크 음악 경로가 없습니다");
+        Add("添加网络音乐路径", "Add network music path", "ネットワーク音楽パスを追加", "네트워크 음악 경로 추가");
+        Add("编辑网络音乐路径", "Edit network music path", "ネットワーク音楽パスを編集", "네트워크 음악 경로 편집");
+        Add("服务器地址不能为空", "Server address is required", "サーバーアドレスを入力してください", "서버 주소를 입력하세요");
+        Add("已保存，设备正在重新扫描曲库", "Saved. The device is rescanning its library.",
+            "保存しました。デバイスがライブラリを再スキャンしています。", "저장했습니다. 기기가 음악 보관함을 다시 검색합니다.");
+        Add("保存失败，请检查设备连接", "Save failed. Check the device connection.",
+            "保存に失敗しました。デバイスの接続を確認してください。", "저장 실패. 기기 연결을 확인하세요.");
+        Add("类型", "Type", "種類", "유형");
+        Add("名称", "Name", "名前", "이름");
+        Add("服务器地址", "Server address", "サーバーアドレス", "서버 주소");
+        Add("端口", "Port", "ポート", "포트");
+        Add("目录", "Folder", "フォルダー", "폴더");
+        Add("用户名", "Username", "ユーザー名", "사용자 이름");
+        Add("密码", "Password", "パスワード", "비밀번호");
+
+        // ---- 软件更新 ----
+        Add("软件更新", "Software update", "ソフトウェア更新", "소프트웨어 업데이트");
+        Add("检查更新", "Check for updates", "アップデートを確認", "업데이트 확인");
+        Add("当前版本 {0}", "Current version {0}", "現在のバージョン {0}", "현재 버전 {0}");
+        Add("安装包放在缤纷云的 Windows 目录，发现新版本可直接下载并运行安装程序。",
+            "Packages are stored in the Bitiful Cloud Windows folder; a new version can be downloaded and installed from here.",
+            "パッケージは Bitiful Cloud の Windows フォルダーにあります。新しいバージョンはここからダウンロードしてインストールできます。",
+            "패키지는 Bitiful Cloud의 Windows 폴더에 있습니다. 새 버전을 여기서 내려받아 설치할 수 있습니다.");
+        Add("正在检查更新…", "Checking for updates…", "アップデートを確認中…", "업데이트 확인 중…");
+        Add("检查更新失败，请稍后再试", "Could not check for updates. Try again later.",
+            "アップデートの確認に失敗しました。後でもう一度お試しください。", "업데이트 확인에 실패했습니다. 잠시 후 다시 시도하세요.");
+        Add("已是最新版本 {0}", "Already on the latest version {0}", "最新バージョン {0} です", "최신 버전 {0} 사용 중입니다");
+        Add("发现新版本 {0}", "New version {0} available", "新しいバージョン {0} があります", "새 버전 {0} 사용 가능");
+        Add("下载并安装", "Download and install", "ダウンロードしてインストール", "다운로드 및 설치");
+        Add("稍后", "Later", "あとで", "나중에");
+        Add("正在下载 {0}%", "Downloading {0}%", "ダウンロード中 {0}%", "다운로드 중 {0}%");
+        Add("下载失败，请稍后再试", "Download failed. Try again later.",
+            "ダウンロードに失敗しました。後でもう一度お試しください。", "다운로드 실패. 잠시 후 다시 시도하세요.");
+        Add("下载完成，正在启动安装程序…", "Downloaded. Starting the installer…",
+            "ダウンロード完了。インストーラーを起動しています…", "다운로드 완료. 설치 프로그램을 시작합니다…");
+        Add("有新版本可以安装。", "A newer version is ready to install.",
+            "新しいバージョンをインストールできます。", "새 버전을 설치할 수 있습니다.");
     }
 
     /// <summary>Adds an entry whose text is the same in every language.</summary>
