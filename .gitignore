@@ -17,3 +17,6 @@ probe/
 # 系统
 .DS_Store
 Thumbs.db
+
+# 上传脚本（含对象存储密钥）与打包辅助
+build/

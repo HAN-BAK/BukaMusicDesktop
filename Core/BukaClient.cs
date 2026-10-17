@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -79,6 +80,63 @@ public sealed class BukaClient : IDisposable
     {
         var body = JsonSerializer.Serialize(payload);
         var response = await PostAsync("/api/settings", body, token).ConfigureAwait(false);
+        return response != null;
+    }
+
+    /// <summary>Network music paths (WebDAV / SMB / FTP) configured on the device.</summary>
+    public async Task<List<NetSourceItem>> GetNetSourcesAsync(CancellationToken token = default)
+    {
+        var result = new List<NetSourceItem>();
+        var json = await GetAsync("/api/net_sources", token).ConfigureAwait(false);
+        if (json == null) return result;
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (!doc.RootElement.TryGetProperty("sources", out var array)) return result;
+            foreach (var entry in array.EnumerateArray())
+            {
+                result.Add(new NetSourceItem
+                {
+                    Id = Str(entry, "id"),
+                    Type = Str(entry, "type"),
+                    Name = Str(entry, "name"),
+                    Host = Str(entry, "host"),
+                    Port = Int(entry, "port"),
+                    Path = Str(entry, "path"),
+                    User = Str(entry, "user"),
+                    Password = Str(entry, "password"),
+                    Domain = Str(entry, "domain"),
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            LogBus.Warn("解析网络曲库设置失败：" + ex.Message);
+        }
+        return result;
+    }
+
+    /// <summary>Replaces the whole list on the device and makes it rescan.</summary>
+    public async Task<bool> SaveNetSourcesAsync(IEnumerable<NetSourceItem> sources,
+                                                CancellationToken token = default)
+    {
+        var payload = new
+        {
+            sources = sources.Select(s => new
+            {
+                id = s.Id,
+                type = s.Type,
+                name = s.Name,
+                host = s.Host,
+                port = s.Port,
+                path = s.Path,
+                user = s.User,
+                password = s.Password,
+                domain = s.Domain,
+            }).ToList(),
+        };
+        var body = JsonSerializer.Serialize(payload);
+        var response = await PostAsync("/api/net_sources", body, token).ConfigureAwait(false);
         return response != null;
     }
 

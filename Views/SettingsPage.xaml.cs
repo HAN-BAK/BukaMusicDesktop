@@ -21,12 +21,14 @@ public sealed partial class SettingsPage : Page
     private bool _loading;
     private List<EqPreset> _presets = new();
     private readonly List<EqBand> _bands;
+    private List<NetSourceItem> _netSources = new();
 
     public SettingsPage()
     {
         InitializeComponent();
         _bands = Frequencies.Select(f => new EqBand { Frequency = f }).ToList();
         EqList.ItemsSource = _bands;
+        VersionText.Text = "当前版本 " + DesktopUpdate.CurrentVersion;
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -69,7 +71,207 @@ public sealed partial class SettingsPage : Page
             _loading = false;
             SaveStatus.Text = "";
         });
+        _netSources = await session.Client.GetNetSourcesAsync();
+        DispatcherQueue.TryEnqueue(RenderNetSources);
         LogBus.Info($"已读取 {session.Device.Name} 的设置");
+    }
+
+    // ------------------------------------------------------------------
+    // 网络曲库（WebDAV / SMB / FTP）
+    // ------------------------------------------------------------------
+
+    private void RenderNetSources()
+    {
+        NetSourceList.Children.Clear();
+        if (_netSources.Count == 0)
+        {
+            NetSourceList.Children.Add(new TextBlock
+            {
+                Text = "还没有添加网络音乐路径",
+                Style = (Style)Application.Current.Resources["HintTextStyle"],
+            });
+            return;
+        }
+        foreach (var source in _netSources.ToList())
+        {
+            var row = new Grid { ColumnSpacing = 10 };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var text = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+            text.Children.Add(new TextBlock
+            {
+                Text = source.Title,
+                Style = (Style)Application.Current.Resources["LabelTextStyle"],
+            });
+            text.Children.Add(new TextBlock
+            {
+                Text = source.Summary,
+                FontSize = 12,
+                Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextSecondaryBrush"],
+            });
+            row.Children.Add(text);
+
+            var edit = new Button
+            {
+                Content = "编辑",
+                Style = (Style)Application.Current.Resources["GhostButtonStyle"],
+            };
+            Grid.SetColumn(edit, 1);
+            edit.Click += async (_, _) => await ShowNetSourceDialogAsync(source);
+            row.Children.Add(edit);
+
+            var remove = new Button
+            {
+                Content = "移除",
+                Style = (Style)Application.Current.Resources["GhostButtonStyle"],
+            };
+            Grid.SetColumn(remove, 2);
+            remove.Click += async (_, _) =>
+            {
+                _netSources.Remove(source);
+                await SaveNetSourcesAsync();
+            };
+            row.Children.Add(remove);
+            NetSourceList.Children.Add(row);
+        }
+    }
+
+    private async void OnAddNetSource(object sender, RoutedEventArgs e)
+        => await ShowNetSourceDialogAsync(null);
+
+    /// <summary>添加 / 编辑一条网络路径。</summary>
+    private async System.Threading.Tasks.Task ShowNetSourceDialogAsync(NetSourceItem? existing)
+    {
+        var session = _session;
+        if (session == null) return;
+        var item = existing?.Clone() ?? new NetSourceItem { Type = "SMB" };
+
+        var type = new ComboBox { Width = 240 };
+        type.Items.Add(new ComboBoxItem { Content = "WebDAV", Tag = "WEBDAV" });
+        type.Items.Add(new ComboBoxItem { Content = "SMB（Windows 共享 / NAS）", Tag = "SMB" });
+        type.Items.Add(new ComboBoxItem { Content = "FTP", Tag = "FTP" });
+        foreach (var entry in type.Items)
+        {
+            if (entry is ComboBoxItem c && (c.Tag as string) == item.Type) type.SelectedItem = c;
+        }
+        string? Sel(ComboBox c) => (c.SelectedItem as ComboBoxItem)?.Tag as string;
+
+        var name = new TextBox { Text = item.Name, PlaceholderText = "列表里显示的名称（可留空）" };
+        var host = new TextBox { Text = item.Host, PlaceholderText = "IP 或域名，例如 192.168.0.123" };
+        var port = new TextBox
+        {
+            Text = item.Port > 0 ? item.Port.ToString() : "",
+            PlaceholderText = "端口（留空用默认）",
+        };
+        var folder = new TextBox { Text = item.Path, PlaceholderText = "起始目录 / 共享名，例如 Music" };
+        var user = new TextBox { Text = item.User, PlaceholderText = "用户名（可留空）" };
+        var password = new PasswordBox { Password = item.Password, PlaceholderText = "密码（可留空）" };
+        var domain = new TextBox { Text = item.Domain, PlaceholderText = "域 / 工作组（SMB 用，可留空）" };
+
+        var panel = new StackPanel { Spacing = 8, Width = 460 };
+        void Add(string label, FrameworkElement field)
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text = label,
+                Style = (Style)Application.Current.Resources["LabelTextStyle"],
+            });
+            panel.Children.Add(field);
+        }
+        Add("类型", type);
+        Add("名称", name);
+        Add("服务器地址", host);
+        Add("端口", port);
+        Add("目录", folder);
+        Add("用户名", user);
+        Add("密码", password);
+        Add("域 / 工作组", domain);
+
+        var dialog = new ContentDialog
+        {
+            Title = existing == null ? "添加网络音乐路径" : "编辑网络音乐路径",
+            Content = new ScrollViewer { Content = panel, MaxHeight = 460 },
+            PrimaryButtonText = "保存",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = XamlRoot,
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+
+        item.Type = Sel(type) ?? "SMB";
+        item.Name = name.Text.Trim();
+        item.Host = host.Text.Trim();
+        item.Port = int.TryParse(port.Text.Trim(), out int p) ? p : 0;
+        item.Path = folder.Text.Trim();
+        item.User = user.Text.Trim();
+        item.Password = password.Password;
+        item.Domain = domain.Text.Trim();
+        if (item.Host.Length == 0)
+        {
+            NetSourceStatus.Text = "服务器地址不能为空";
+            return;
+        }
+        if (existing == null) _netSources.Add(item);
+        await SaveNetSourcesAsync();
+    }
+
+    private async System.Threading.Tasks.Task SaveNetSourcesAsync()
+    {
+        var session = _session;
+        if (session == null) return;
+        bool ok = await session.Client.SaveNetSourcesAsync(_netSources);
+        NetSourceStatus.Text = ok ? "已保存，设备正在重新扫描曲库" : "保存失败，请检查设备连接";
+        RenderNetSources();
+        if (ok) LogBus.Info($"已保存 {_netSources.Count} 条网络音乐路径");
+    }
+
+    // ------------------------------------------------------------------
+    // 软件更新
+    // ------------------------------------------------------------------
+
+    private async void OnCheckUpdate(object sender, RoutedEventArgs e)
+    {
+        UpdateStatus.Text = "正在检查更新…";
+        var info = await DesktopUpdate.CheckAsync();
+        if (info == null)
+        {
+            UpdateStatus.Text = "检查更新失败，请稍后再试";
+            return;
+        }
+        if (info.VersionCode <= DesktopUpdate.CurrentVersionCode)
+        {
+            UpdateStatus.Text = $"已是最新版本 {DesktopUpdate.CurrentVersion}";
+            return;
+        }
+        var dialog = new ContentDialog
+        {
+            Title = $"发现新版本 {info.Version}",
+            Content = new ScrollViewer
+            {
+                MaxHeight = 360,
+                Content = new TextBlock
+                {
+                    Text = string.IsNullOrWhiteSpace(info.Notes) ? "有新版本可以安装。" : info.Notes,
+                    TextWrapping = TextWrapping.Wrap,
+                },
+            },
+            PrimaryButtonText = "下载并安装",
+            CloseButtonText = "稍后",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = XamlRoot,
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        var progress = new Progress<int>(percent => UpdateStatus.Text = $"正在下载 {percent}%");
+        string? setup = await DesktopUpdate.DownloadSetupAsync(info, progress);
+        if (setup == null)
+        {
+            UpdateStatus.Text = "下载失败，请稍后再试";
+            return;
+        }
+        UpdateStatus.Text = "下载完成，正在启动安装程序…";
+        DesktopUpdate.RunSetup(setup);
     }
 
     private static void SelectByTag(ComboBox combo, string? tag)

@@ -124,6 +124,39 @@
 
             <Border Style="{StaticResource SectionCardStyle}">
                 <StackPanel Spacing="10">
+                    <TextBlock Text="网络曲库" Style="{StaticResource SectionTitleStyle}" />
+                    <TextBlock Style="{StaticResource HintTextStyle}"
+                               Text="支持 WebDAV、SMB（Windows 共享 / NAS）、FTP，与设备上的本地音乐合并显示；这里修改的是设备上的设置。" />
+                    <StackPanel x:Name="NetSourceList" Spacing="8" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Content="添加网络路径" Style="{StaticResource GhostButtonStyle}"
+                                Click="OnAddNetSource" />
+                        <controls:MarqueeText x:Name="NetSourceStatus" Text="" MaxWidth="640"
+                                              FontFamily="{StaticResource UiFont}" FontSize="12"
+                                              Foreground="{StaticResource TextSecondaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SectionCardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="软件更新" Style="{StaticResource SectionTitleStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock x:Name="VersionText" VerticalAlignment="Center"
+                                   Style="{StaticResource LabelTextStyle}" />
+                        <Button Content="检查更新" Style="{StaticResource GhostButtonStyle}"
+                                Click="OnCheckUpdate" />
+                        <controls:MarqueeText x:Name="UpdateStatus" Text="" MaxWidth="520"
+                                              FontFamily="{StaticResource UiFont}" FontSize="12"
+                                              Foreground="{StaticResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource HintTextStyle}"
+                               Text="安装包放在缤纷云的 Windows 目录，发现新版本可直接下载并运行安装程序。" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SectionCardStyle}">
+                <StackPanel Spacing="10">
                     <TextBlock Text="均衡器（10 频段，dB）" Style="{StaticResource SectionTitleStyle}" />
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Button Content="保存预设" Style="{StaticResource GhostButtonStyle}"

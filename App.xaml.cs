@@ -92,6 +92,7 @@ public partial class App : Application
         var window = new MainWindow();
         MainWindow = window;
         window.Activate();
+        _ = CheckUpdatesOnStartupAsync(window);
         if (_startupHost != null)
         {
             Views.ShellPage.StartupNavTest = _startupNavTest;
@@ -109,6 +110,54 @@ public partial class App : Application
 
     private static string? _shotPath;
     private static string? _shotElement;
+
+    /// <summary>
+    /// 启动时自动检查更新（24 小时一次）；发现新版本弹窗询问是否下载。
+    /// </summary>
+    private static async System.Threading.Tasks.Task CheckUpdatesOnStartupAsync(MainWindow window)
+    {
+        try
+        {
+            await System.Threading.Tasks.Task.Delay(3500);
+            string stampPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "BukaMusicDesktop", "last_update_check.txt");
+            Directory.CreateDirectory(Path.GetDirectoryName(stampPath)!);
+            if (File.Exists(stampPath)
+                && DateTime.TryParse(File.ReadAllText(stampPath), out var last)
+                && (DateTime.Now - last).TotalHours < 24)
+            {
+                return;
+            }
+            File.WriteAllText(stampPath, DateTime.Now.ToString("O"));
+            var info = await DesktopUpdate.CheckAsync();
+            if (info == null || info.VersionCode <= DesktopUpdate.CurrentVersionCode) return;
+            if (window.Content?.XamlRoot == null) return;
+            var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+            {
+                Title = $"发现新版本 {info.Version}",
+                Content = new Microsoft.UI.Xaml.Controls.TextBlock
+                {
+                    Text = string.IsNullOrWhiteSpace(info.Notes) ? "有新版本可以安装。" : info.Notes,
+                    TextWrapping = Microsoft.UI.Xaml.TextWrapping.Wrap,
+                },
+                PrimaryButtonText = "下载并安装",
+                CloseButtonText = "稍后",
+                DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Primary,
+                XamlRoot = window.Content.XamlRoot,
+            };
+            if (await dialog.ShowAsync() != Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+            {
+                return;
+            }
+            string? setup = await DesktopUpdate.DownloadSetupAsync(info);
+            if (setup != null) DesktopUpdate.RunSetup(setup);
+        }
+        catch (Exception ex)
+        {
+            LogBus.Warn("自动检查更新失败：" + ex.Message);
+        }
+    }
 
     /// <summary>Waits for the page to load its data, then renders it to a PNG.</summary>
     private static async System.Threading.Tasks.Task CaptureAfterDelayAsync(

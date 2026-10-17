@@ -18,6 +18,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <AssemblyName>BukaMusicDesktop</AssemblyName>
+    <Version>1.1.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <DefaultLanguage>zh-CN</DefaultLanguage>
   </PropertyGroup>
@@ -26,6 +27,13 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260921001" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
+  </ItemGroup>
+
+  <!-- installer/ 是独立的 WinForms 安装程序项目，不能被打进主程序 -->
+  <ItemGroup>
+    <Compile Remove="installer\**" />
+    <None Remove="installer\**" />
+    <Content Remove="installer\**" />
   </ItemGroup>
 
   <!-- The Direct2D print-stack shader, precompiled by Shaders/compile.ps1 so no
