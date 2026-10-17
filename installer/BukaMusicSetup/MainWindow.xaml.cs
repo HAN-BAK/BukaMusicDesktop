@@ -19,30 +19,16 @@ public partial class MainWindow : Window
         InitializeComponent();
         _defaultDir = initialDir;
         PathBox.Text = initialDir;
-        VersionText.Text = "v" + (System.Reflection.Assembly
-            .GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0");
-        SourceInitialized += (_, _) => TryEnableMica();
     }
 
-    /// <summary>Windows 11 的 Mica 背景；老系统上保持浅灰底色。</summary>
-    private void TryEnableMica()
+    /// <summary>无边框窗口：按住空白处拖动。</summary>
+    private void OnDrag(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        try
+        if (e.ButtonState == System.Windows.Input.MouseButtonState.Pressed)
         {
-            IntPtr hwnd = new WindowInteropHelper(this).Handle;
-            // 只开深色标题栏；窗口本身用与应用一致的深色底。
-            // （无边框窗口开 Mica 在部分机器上会变成纯黑，所以不依赖它。）
-            int dark = 1;   // 深色标题栏 / 深色 Mica，与应用内配色一致
-            DwmSetWindowAttribute(hwnd, 20, ref dark, sizeof(int));
-        }
-        catch
-        {
+            DragMove();
         }
     }
-
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute,
-                                                    ref int value, int size);
 
     private void OnBrowse(object sender, RoutedEventArgs e)
     {
