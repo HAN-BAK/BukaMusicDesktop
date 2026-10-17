@@ -116,6 +116,10 @@
                         <Button x:Name="DeviceScreenButton" Content="歌词界面"
                                 Style="{StaticResource GhostButtonStyle}"
                                 Click="OnDeviceScreen" />
+                        <!-- 远程开关设备屏保：设备处于屏保时变成「关闭屏保」 -->
+                        <Button x:Name="ScreensaverButton" Content="开启屏保"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Click="OnScreenSaver" />
                     </StackPanel>
                 </StackPanel>
             </Border>

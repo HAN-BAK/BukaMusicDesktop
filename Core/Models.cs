@@ -45,10 +45,16 @@ public sealed class DeviceState : INotifyPropertyChanged
     public bool HasCover { get => _hasCover; set => Set(ref _hasCover, value); }
     public int Volume { get => _volume; set => Set(ref _volume, value); }
     public int VolumeMax { get => _volumeMax; set => Set(ref _volumeMax, value); }
-    /// <summary>Screen the device shows: "lyrics" or "main".</summary>
-    public string Screen { get => _screen; set => Set(ref _screen, value, nameof(IsLyricsScreen)); }
+    /// <summary>Screen the device shows: "screensaver", "lyrics" or "main".</summary>
+    public string Screen
+    {
+        get => _screen;
+        set => Set(ref _screen, value, nameof(IsLyricsScreen), nameof(IsScreensaver));
+    }
 
     public bool IsLyricsScreen => string.Equals(_screen, "lyrics", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsScreensaver => string.Equals(_screen, "screensaver", StringComparison.OrdinalIgnoreCase);
 
     public string SourceText => Source switch
     {

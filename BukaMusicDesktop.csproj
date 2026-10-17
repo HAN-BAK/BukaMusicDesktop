@@ -18,7 +18,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <AssemblyName>BukaMusicDesktop</AssemblyName>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <DefaultLanguage>zh-CN</DefaultLanguage>
   </PropertyGroup>
@@ -34,6 +34,8 @@
     <Compile Remove="installer\**" />
     <None Remove="installer\**" />
     <Content Remove="installer\**" />
+    <Page Remove="installer\**" />
+    <ApplicationDefinition Remove="installer\**" />
   </ItemGroup>
 
   <!-- The Direct2D print-stack shader, precompiled by Shaders/compile.ps1 so no

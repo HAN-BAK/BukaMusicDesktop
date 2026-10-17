@@ -526,6 +526,8 @@ public sealed class Loc
         // ---- 软件更新 ----
         Add("软件更新", "Software update", "ソフトウェア更新", "소프트웨어 업데이트");
         Add("检查更新", "Check for updates", "アップデートを確認", "업데이트 확인");
+        Add("开启屏保", "Open screensaver", "スクリーンセーバーを開く", "화면 보호기 열기");
+        Add("关闭屏保", "Close screensaver", "スクリーンセーバーを閉じる", "화면 보호기 닫기");
         Add("当前版本 {0}", "Current version {0}", "現在のバージョン {0}", "현재 버전 {0}");
         Add("安装包放在缤纷云的 Windows 目录，发现新版本可直接下载并运行安装程序。",
             "Packages are stored in the Bitiful Cloud Windows folder; a new version can be downloaded and installed from here.",

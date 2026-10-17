@@ -61,6 +61,18 @@ public sealed partial class ControlPage : Page
             : "切换设备界面失败");
     }
 
+    /// <summary>Opens / closes the device's screensaver clock.</summary>
+    private async void OnScreenSaver(object sender, RoutedEventArgs e)
+    {
+        var session = _session;
+        if (session == null) return;
+        bool on = session.State.IsScreensaver;
+        bool ok = await session.Client.ControlAsync(on ? "openMain" : "openScreensaver");
+        LogBus.Info(ok
+            ? (on ? "已请求设备关闭屏保" : "已请求设备开启屏保")
+            : "切换设备屏保失败");
+    }
+
     /// <summary>Mirrors the local player's state into the transport card.</summary>
     private void UpdateLocalAudioUi()
     {
@@ -201,6 +213,9 @@ public sealed partial class ControlPage : Page
             // 设备显示歌词页时按钮变成「播放界面」，点一下切回主播放界面。
             DeviceScreenButton.Content = Loc.Current.Text(
                 state.IsLyricsScreen ? "播放界面" : "歌词界面");
+            // 设备处于屏保时按钮变成「关闭屏保」。
+            ScreensaverButton.Content = Loc.Current.Text(
+                state.IsScreensaver ? "关闭屏保" : "开启屏保");
         }
 
         _ = RefreshCoverAsync();
